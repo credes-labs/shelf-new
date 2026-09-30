@@ -1,8 +1,8 @@
 'use client';
 
 import { PointerEvent, useEffect, useReducer, useRef, useState } from 'react';
-import Image from 'next/image';
 import { Brick, clearAndSettle, COLS, findClears, generate, moveBrick, ROWS, SEED } from '@/lib/bricks';
+import DitherVeil from '@/components/DitherVeil';
 
 type State = { bricks: Brick[]; draggingId: number | null; dyingIds: number[]; resetVersion: number };
 type Action =
@@ -147,7 +147,22 @@ export default function BrickFooter() {
   }
 
   return <section ref={sectionRef} className="brick-footer" aria-label="Sort the bricks" style={{ height: `${cellSize * rowCount}px` }}>
-    <Image className="brick-footer-art" src="/svg/shelf-footer.svg" alt="" aria-hidden="true" width={932} height={146} unoptimized />
+    <DitherVeil
+      className="brick-footer-art"
+      src="/svg/shelf-footer.svg"
+      fit="contain"
+      pattern="floyd"
+      palette="duotone"
+      pixelSize={2}
+      inkColor="#353535"
+      paperColor="#fbfbfa"
+      revealRadius={150}
+      softness={0.72}
+      linger={0.9}
+      transparentPaper
+      listenToParent
+      ariaHidden
+    />
     <div className="brick-footer-hint">
       <span>Drag | Match a full row</span>
       <button type="button" onClick={() => { dragRef.current = null; dispatch({ type: 'reset' }); }}>Reset</button>

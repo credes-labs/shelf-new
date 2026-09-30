@@ -27,10 +27,7 @@ export default function HeroTabs() {
       }}
       onClick={() => setActiveTab(activeTab === index ? null : index)}
     >
-      <span
-        aria-hidden="true"
-        style={{ left: `${-tab.x / 299 * 100}cqw` }}
-      />
+      <span aria-hidden="true" style={{ left: `${-tab.x / 299 * 100}cqw` }} />
     </button>)}
   </div>;
 }

@@ -1,19 +1,20 @@
 'use client';
 
-import { KeyboardEvent, PointerEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { KeyboardEvent, PointerEvent, useEffect, useRef, useState } from 'react';
 import { Bold, ChevronDown, Italic } from 'lucide-react';
 
 type FontName = 'Caveat' | 'Space Grotesk' | 'Manrope' | 'DM Sans' | 'Outfit' | 'Inter';
 type IntroState = {
   fields: { name: string };
-  styled: { text: string; font: FontName; bold: boolean; italic: boolean; color: string; size: number; scaleX: number; scaleY: number };
+  styled: { text: string; font: FontName; bold: boolean; italic: boolean; color: string; size: number };
 };
 type MenuName = 'font' | 'color' | null;
+type TokenPosition = { x: number; y: number };
 
 const STORAGE_KEY = 'shelf-editable-intro-v1';
 const INITIAL: IntroState = {
   fields: { name: 'context' },
-  styled: { text: 'matters', font: 'Caveat', bold: false, italic: true, color: '#292929', size: 58, scaleX: 1, scaleY: 1 },
+  styled: { text: 'matters', font: 'Caveat', bold: false, italic: true, color: '#292929', size: 58 },
 };
 const FONTS: FontName[] = ['Caveat', 'Space Grotesk', 'Manrope', 'DM Sans', 'Outfit', 'Inter'];
 const COLORS = ['#292929', '#777777', '#e94f5a', '#f28a32', '#32885b', '#3978d0', '#8056bb', '#df6b9a'];
@@ -77,11 +78,12 @@ export default function EditableIntro() {
   const [selected, setSelected] = useState(false);
   const [menu, setMenu] = useState<MenuName>(null);
   const [toolbarPosition, setToolbarPosition] = useState({ left: 0, top: 0 });
-  const [tokenSize, setTokenSize] = useState({ width: 0, height: 0 });
+  const [tokenPosition, setTokenPosition] = useState<TokenPosition>({ x: 0, y: 0 });
   const tokenRef = useRef<HTMLSpanElement>(null);
-  const editorRef = useRef<HTMLSpanElement>(null);
+  const lineRef = useRef<HTMLSpanElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const resizeRef = useRef<{ pointerX: number; pointerY: number; scaleX: number; scaleY: number; corner: string } | null>(null);
+  const moveRef = useRef<{ pointerX: number; pointerY: number; x: number; y: number; minX: number; maxX: number; minY: number; maxY: number } | null>(null);
+  const resizeRef = useRef<{ pointerX: number; pointerY: number; size: number; corner: string } | null>(null);
 
   useEffect(() => {
     let restored: IntroState | null = null;
@@ -93,12 +95,12 @@ export default function EditableIntro() {
           fields: { name: cleanText(parsed.fields.name || INITIAL.fields.name) },
           styled: {
             ...INITIAL.styled,
-            ...parsed.styled,
             text: INITIAL.styled.text,
+            bold: Boolean(parsed.styled.bold),
+            italic: Boolean(parsed.styled.italic),
+            color: typeof parsed.styled.color === 'string' ? parsed.styled.color : INITIAL.styled.color,
             font: FONTS.includes(parsed.styled.font) ? parsed.styled.font : INITIAL.styled.font,
             size: Math.max(14, Math.min(64, Number(parsed.styled.size) || INITIAL.styled.size)),
-            scaleX: Math.max(0.5, Math.min(2.5, Number(parsed.styled.scaleX) || 1)),
-            scaleY: Math.max(0.5, Math.min(2.5, Number(parsed.styled.scaleY) || 1)),
           },
         };
       }
@@ -114,16 +116,6 @@ export default function EditableIntro() {
     if (!ready) return;
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(intro)); } catch { /* Editing remains available without persistence. */ }
   }, [intro, ready]);
-
-  useLayoutEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const measure = () => setTokenSize({ width: editor.offsetWidth, height: editor.offsetHeight });
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(editor);
-    return () => observer.disconnect();
-  }, [intro.styled.font, intro.styled.bold, intro.styled.italic, intro.styled.size]);
 
   useEffect(() => {
     if (!selected) return;
@@ -147,7 +139,7 @@ export default function EditableIntro() {
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [selected, menu, intro.styled.font, intro.styled.size, intro.styled.scaleX, intro.styled.scaleY]);
+  }, [selected, menu, intro.styled.font, intro.styled.size, tokenPosition.x, tokenPosition.y]);
 
   useEffect(() => {
     if (!selected) return;
@@ -182,18 +174,42 @@ export default function EditableIntro() {
     if (!resize) return;
     const dx = event.clientX - resize.pointerX;
     const dy = event.clientY - resize.pointerY;
-    const directionX = resize.corner.includes('left') ? -1 : 1;
-    const directionY = resize.corner.includes('top') ? -1 : 1;
-    updateStyled({
-      scaleX: Math.max(0.5, Math.min(2.5, resize.scaleX + directionX * dx / Math.max(40, tokenSize.width))),
-      scaleY: Math.max(0.5, Math.min(2.5, resize.scaleY + directionY * dy / Math.max(32, tokenSize.height))),
-    });
+    const direction = resize.corner.includes('left') ? -1 : 1;
+    updateStyled({ size: Math.round(Math.max(14, Math.min(64, resize.size + direction * (dx - dy) / 2))) });
   }
   function startResize(event: PointerEvent<HTMLButtonElement>) {
+    event.stopPropagation();
     const corner = event.currentTarget.dataset.corner ?? 'bottom-right';
-    resizeRef.current = { pointerX: event.clientX, pointerY: event.clientY, scaleX: intro.styled.scaleX, scaleY: intro.styled.scaleY, corner };
+    resizeRef.current = { pointerX: event.clientX, pointerY: event.clientY, size: intro.styled.size, corner };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
+  function moveToken(event: PointerEvent<HTMLSpanElement>) {
+    const move = moveRef.current;
+    if (!move) return;
+    setTokenPosition({
+      x: Math.max(move.minX, Math.min(move.maxX, move.x + event.clientX - move.pointerX)),
+      y: Math.max(move.minY, Math.min(move.maxY, move.y + event.clientY - move.pointerY)),
+    });
+  }
+  function startMove(event: PointerEvent<HTMLSpanElement>) {
+    if (!selected || (event.target as HTMLElement).closest('.token-handle')) return;
+    const token = tokenRef.current?.getBoundingClientRect();
+    const line = lineRef.current?.getBoundingClientRect();
+    if (!token || !line) return;
+    event.preventDefault();
+    moveRef.current = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      x: tokenPosition.x,
+      y: tokenPosition.y,
+      minX: tokenPosition.x + line.left - token.left,
+      maxX: tokenPosition.x + line.right - token.right,
+      minY: tokenPosition.y + line.top - token.top,
+      maxY: tokenPosition.y + line.bottom - token.bottom,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function stopMove() { moveRef.current = null; }
   function stopResize() { resizeRef.current = null; }
   function menuKeys(event: KeyboardEvent<HTMLDivElement>) {
     const options = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]'));
@@ -212,21 +228,24 @@ export default function EditableIntro() {
   return <>
     <h1 className="editable-intro">
       <span className="intro-line">Keep your <EditableField value={intro.fields.name} label="First editable phrase" onChange={(value) => updateField('name', value)} />.</span>
-      <span className="intro-line">Find it when it{' '}
+      <span ref={lineRef} className="intro-line">Find it when it{' '}
         <span
           ref={tokenRef}
           className={`styled-token-wrap${selected ? ' is-selected' : ''}`}
-          style={tokenSize.width ? { width: tokenSize.width * intro.styled.scaleX + 4, height: tokenSize.height * intro.styled.scaleY } : undefined}
+          style={{ transform: `translate3d(${tokenPosition.x}px, ${tokenPosition.y}px, 0)` }}
           role="group"
           tabIndex={0}
           aria-label="matters text styling"
           onClick={selectStyled}
+          onPointerDown={startMove}
+          onPointerMove={moveToken}
+          onPointerUp={stopMove}
+          onPointerCancel={stopMove}
           onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectStyled(); } }}
         >
           <span
-            ref={editorRef}
             className="styled-token-editor"
-            style={{ fontFamily: FONT_STACKS[intro.styled.font], fontWeight: intro.styled.bold ? 700 : 400, fontStyle: intro.styled.italic ? 'italic' : 'normal', color: intro.styled.color, fontSize: intro.styled.size, transform: `scale(${intro.styled.scaleX}, ${intro.styled.scaleY})`, transformOrigin: 'left center' }}
+            style={{ fontFamily: FONT_STACKS[intro.styled.font], fontWeight: intro.styled.bold ? 700 : 400, fontStyle: intro.styled.italic ? 'italic' : 'normal', color: intro.styled.color, fontSize: intro.styled.size }}
           >matters</span>
           <span className="token-selection-outline" aria-hidden="true" />
           {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((corner) => <button
@@ -267,7 +286,6 @@ export default function EditableIntro() {
     </div>}
   </>;
 }
-
 
 
 
