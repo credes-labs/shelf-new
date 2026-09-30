@@ -1,9 +1,8 @@
 export type Color = 'blue' | 'red' | 'yellow';
 export type Brick = { id: number; color: Color; x: number; row: number; w: number };
 
-export const COLS = 40;
-export const ROWS = 10;
-export const RUN_MIN = 8;
+export const COLS = 14;
+export const ROWS = 8;
 export const SEED = 7;
 
 const COLORS: Color[] = ['blue', 'red', 'yellow'];
@@ -18,8 +17,8 @@ function mulberry32(seed: number) {
 }
 
 /** Return the occupied height of each column. */
-function heights(bricks: Brick[]) {
-  const top = new Array(COLS).fill(0) as number[];
+function heights(bricks: Brick[], cols = COLS) {
+  const top = new Array(cols).fill(0) as number[];
   for (const brick of bricks) {
     for (let column = brick.x; column < brick.x + brick.w; column += 1) {
       top[column] = Math.max(top[column], brick.row + 1);
@@ -29,16 +28,16 @@ function heights(bricks: Brick[]) {
 }
 
 /** Drop a brick to the first row supported by another brick or the floor. */
-export function landingRow(bricks: Brick[], x: number, width: number, skipId?: number) {
-  const top = heights(bricks.filter((brick) => brick.id !== skipId));
+export function landingRow(bricks: Brick[], x: number, width: number, skipId?: number, cols = COLS) {
+  const top = heights(bricks.filter((brick) => brick.id !== skipId), cols);
   let row = 0;
   for (let column = x; column < x + width; column += 1) row = Math.max(row, top[column]);
   return row;
 }
 
 /** Apply simple gravity while keeping brick order stable from floor upward. */
-export function settle(bricks: Brick[]): Brick[] {
-  const top = new Array(COLS).fill(0) as number[];
+export function settle(bricks: Brick[], cols = COLS): Brick[] {
+  const top = new Array(cols).fill(0) as number[];
   return [...bricks].sort((a, b) => a.row - b.row || a.x - b.x).map((brick) => {
     let row = 0;
     for (let column = brick.x; column < brick.x + brick.w; column += 1) row = Math.max(row, top[column]);
@@ -47,36 +46,32 @@ export function settle(bricks: Brick[]): Brick[] {
   });
 }
 
-/** Stop a horizontal move if it would overlap a neighbor in the same row. */
-export function moveBrick(bricks: Brick[], id: number, nextX: number): Brick[] {
+/** Snap a brick to any open horizontal and vertical board position. */
+export function moveBrick(bricks: Brick[], id: number, nextX: number, nextRow: number, cols = COLS, rows = ROWS): Brick[] {
   const moving = bricks.find((brick) => brick.id === id);
   if (!moving) return bricks;
-  const x = Math.max(0, Math.min(COLS - moving.w, Math.round(nextX)));
-  const overlaps = bricks.some((brick) => brick.id !== id && brick.row === moving.row && x < brick.x + brick.w && x + moving.w > brick.x);
+  const x = Math.max(0, Math.min(cols - moving.w, Math.round(nextX)));
+  const row = Math.max(0, Math.min(rows - 1, Math.round(nextRow)));
+  const overlaps = bricks.some((brick) => brick.id !== id &&
+    x < brick.x + brick.w && x + moving.w > brick.x &&
+    row === brick.row);
   if (overlaps) return bricks;
-  return bricks.map((brick) => brick.id === id ? { ...brick, x } : brick);
+  return bricks.map((brick) => brick.id === id ? { ...brick, x, row } : brick);
 }
 
-/** Remove same-color contiguous runs of at least eight stud cells. */
+/** Clear a row only when every brick in it forms one contiguous, single-color run. */
 export function findClears(bricks: Brick[]): Set<number> {
   const dead = new Set<number>();
   const byRow = new Map<number, Brick[]>();
   for (const brick of bricks) byRow.set(brick.row, [...(byRow.get(brick.row) ?? []), brick]);
   for (const row of Array.from(byRow.values())) {
     const ordered = [...row].sort((a, b) => a.x - b.x);
-    let run: Brick[] = [];
-    const flush = () => {
-      if (run.length && run.reduce((sum, brick) => sum + brick.w, 0) >= RUN_MIN) {
-        run.forEach((brick) => dead.add(brick.id));
-      }
-      run = [];
-    };
-    for (const brick of ordered) {
-      const last = run[run.length - 1];
-      if (last && last.color === brick.color && last.x + last.w === brick.x) run.push(brick);
-      else { flush(); run = [brick]; }
-    }
-    flush();
+    if (ordered.length < 2) continue;
+    const color = ordered[0].color;
+    const contiguous = ordered.every((brick, index) =>
+      brick.color === color && (index === 0 || ordered[index - 1].x + ordered[index - 1].w === brick.x),
+    );
+    if (contiguous) ordered.forEach((brick) => dead.add(brick.id));
   }
   return dead;
 }
@@ -124,12 +119,12 @@ export function generate(seed = SEED): Brick[] {
 }
 
 /** Remove cleared runs, apply gravity, and resolve any newly formed clears. */
-export function clearAndSettle(bricks: Brick[]): Brick[] {
+export function clearAndSettle(bricks: Brick[], cols = COLS): Brick[] {
   let remaining = bricks;
   let clears = findClears(remaining);
   while (clears.size) {
-    remaining = settle(remaining.filter((brick) => !clears.has(brick.id)));
+    remaining = settle(remaining.filter((brick) => !clears.has(brick.id)), cols);
     clears = findClears(remaining);
   }
-  return settle(remaining);
+  return settle(remaining, cols);
 }

@@ -1,29 +1,29 @@
 'use client';
 
-import { ClipboardEvent, KeyboardEvent, PointerEvent, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent, PointerEvent, useEffect, useRef, useState } from 'react';
 import { Bold, ChevronDown, Italic } from 'lucide-react';
 
-type FontName = 'Caveat' | 'Instrument Serif' | 'Space Grotesk' | 'JetBrains Mono' | 'Playfair Display' | 'Inter';
+type FontName = 'Caveat' | 'Space Grotesk' | 'Manrope' | 'DM Sans' | 'Outfit' | 'Inter';
 type IntroState = {
-  fields: { name: string; city: string };
+  fields: { name: string };
   styled: { text: string; font: FontName; bold: boolean; italic: boolean; color: string; size: number };
 };
 type MenuName = 'font' | 'color' | null;
 
 const STORAGE_KEY = 'shelf-editable-intro-v1';
 const INITIAL: IntroState = {
-  fields: { name: 'context', city: 'it' },
+  fields: { name: 'context' },
   styled: { text: 'matters', font: 'Caveat', bold: false, italic: true, color: '#292929', size: 58 },
 };
-const FONTS: FontName[] = ['Caveat', 'Instrument Serif', 'Space Grotesk', 'JetBrains Mono', 'Playfair Display', 'Inter'];
+const FONTS: FontName[] = ['Caveat', 'Space Grotesk', 'Manrope', 'DM Sans', 'Outfit', 'Inter'];
 const COLORS = ['#292929', '#777777', '#e94f5a', '#f28a32', '#32885b', '#3978d0', '#8056bb', '#df6b9a'];
 const FONT_STACKS: Record<FontName, string> = {
   Caveat: 'var(--font-caveat), cursive',
-  'Instrument Serif': 'var(--font-instrument-serif), Georgia, serif',
-  'Space Grotesk': 'var(--font-space-grotesk), Arial, sans-serif',
-  'JetBrains Mono': 'var(--font-jetbrains-mono), monospace',
-  'Playfair Display': 'var(--font-playfair-display), Georgia, serif',
-  Inter: 'Inter, Arial, sans-serif',
+  'Space Grotesk': 'var(--font-space-grotesk), sans-serif',
+  Manrope: 'var(--font-manrope), sans-serif',
+  'DM Sans': 'var(--font-dm-sans), sans-serif',
+  Outfit: 'var(--font-outfit), sans-serif',
+  Inter: 'var(--font-inter), sans-serif',
 };
 
 function cleanText(text: string) {
@@ -78,8 +78,6 @@ export default function EditableIntro() {
   const [menu, setMenu] = useState<MenuName>(null);
   const [toolbarPosition, setToolbarPosition] = useState({ left: 0, top: 0 });
   const tokenRef = useRef<HTMLSpanElement>(null);
-  const editorRef = useRef<HTMLSpanElement>(null);
-  const styledTextRef = useRef(INITIAL.styled.text);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<{ pointerX: number; pointerY: number; size: number; corner: string } | null>(null);
 
@@ -90,11 +88,11 @@ export default function EditableIntro() {
       if (stored) {
         const parsed = JSON.parse(stored) as IntroState;
         if (parsed.fields && parsed.styled) restored = {
-          fields: { name: cleanText(parsed.fields.name || INITIAL.fields.name), city: cleanText(parsed.fields.city || INITIAL.fields.city) },
+          fields: { name: cleanText(parsed.fields.name || INITIAL.fields.name) },
           styled: {
             ...INITIAL.styled,
             ...parsed.styled,
-            text: cleanText(parsed.styled.text || INITIAL.styled.text),
+            text: INITIAL.styled.text,
             font: FONTS.includes(parsed.styled.font) ? parsed.styled.font : INITIAL.styled.font,
             size: Math.max(14, Math.min(64, Number(parsed.styled.size) || INITIAL.styled.size)),
           },
@@ -102,10 +100,7 @@ export default function EditableIntro() {
       }
     } catch { /* Local storage can be disabled or contain stale data. */ }
     const timer = window.setTimeout(() => {
-      if (restored) {
-        styledTextRef.current = restored.styled.text;
-        setIntro(restored);
-      }
+      if (restored) setIntro(restored);
       setReady(true);
     }, 0);
     return () => window.clearTimeout(timer);
@@ -113,12 +108,8 @@ export default function EditableIntro() {
 
   useEffect(() => {
     if (!ready) return;
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...intro, styled: { ...intro.styled, text: styledTextRef.current } })); } catch { /* Editing remains available without persistence. */ }
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(intro)); } catch { /* Editing remains available without persistence. */ }
   }, [intro, ready]);
-
-  useEffect(() => {
-    if (editorRef.current && editorRef.current.textContent !== intro.styled.text) editorRef.current.textContent = intro.styled.text;
-  }, [intro.styled.text]);
 
   useEffect(() => {
     if (!selected) return;
@@ -156,7 +147,7 @@ export default function EditableIntro() {
     const handleEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       if (menu) setMenu(null);
-      else { setSelected(false); editorRef.current?.blur(); }
+      else setSelected(false);
     };
     document.addEventListener('pointerdown', handleOutside);
     document.addEventListener('keydown', handleEscape);
@@ -166,24 +157,11 @@ export default function EditableIntro() {
     };
   }, [selected, menu]);
 
-  function updateField(field: 'name' | 'city', value: string) {
+  function updateField(field: 'name', value: string) {
     setIntro((current) => ({ ...current, fields: { ...current.fields, [field]: value } }));
   }
   function updateStyled(values: Partial<IntroState['styled']>) {
     setIntro((current) => ({ ...current, styled: { ...current.styled, ...values } }));
-  }
-  function updateStyledText() {
-    const element = editorRef.current;
-    if (!element) return;
-    const next = cleanText(element.textContent ?? '');
-    if (element.textContent !== next) element.textContent = next;
-    styledTextRef.current = next;
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...intro, styled: { ...intro.styled, text: next } })); } catch { /* Editing remains available without persistence. */ }
-  }
-  function pastePlain(event: ClipboardEvent<HTMLSpanElement>) {
-    event.preventDefault();
-    document.execCommand('insertText', false, cleanText(event.clipboardData.getData('text/plain')));
-    updateStyledText();
   }
   function resizeToken(event: PointerEvent<HTMLButtonElement>) {
     const resize = resizeRef.current;
@@ -216,35 +194,22 @@ export default function EditableIntro() {
   return <>
     <h1 className="editable-intro">
       <span className="intro-line">Keep your <EditableField value={intro.fields.name} label="First editable phrase" onChange={(value) => updateField('name', value)} />.</span>
-      <span className="intro-line">Find <EditableField value={intro.fields.city} label="Second editable phrase" onChange={(value) => updateField('city', value)} /> when it{' '}
-        <span ref={tokenRef} className={`styled-token-wrap${selected ? ' is-selected' : ''}`} onClick={selectStyled}>
+      <span className="intro-line">Find it when it{' '}
+        <span
+          ref={tokenRef}
+          className={`styled-token-wrap${selected ? ' is-selected' : ''}`}
+          role="group"
+          tabIndex={0}
+          aria-label="matters text styling"
+          onClick={selectStyled}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectStyled(); } }}
+        >
           <span
-            ref={editorRef}
             className="styled-token-editor"
-            role="textbox"
-            aria-label="Highlighted phrase, editable"
-            aria-multiline="false"
-            contentEditable
-            suppressContentEditableWarning
-            spellCheck={false}
-            tabIndex={0}
             style={{ fontFamily: FONT_STACKS[intro.styled.font], fontWeight: intro.styled.bold ? 700 : 400, fontStyle: intro.styled.italic ? 'italic' : 'normal', color: intro.styled.color, fontSize: intro.styled.size }}
-            onInput={updateStyledText}
-            onPaste={pastePlain}
-            onFocus={() => setSelected(true)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); }
-              if (event.key.length === 1 && (event.currentTarget.textContent?.length ?? 0) >= 30 && !window.getSelection()?.toString()) event.preventDefault();
-            }}
-            onBlur={() => {
-              const next = editorRef.current?.textContent?.trim() ?? '';
-              const resolved = next || intro.styled.text || INITIAL.styled.text;
-              if (editorRef.current) editorRef.current.textContent = resolved;
-              updateStyled({ text: resolved });
-            }}
-          />
-          {selected && <span className="token-selection-outline" aria-hidden="true" />}
-          {selected && ['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((corner) => <button
+          >matters</span>
+          <span className="token-selection-outline" aria-hidden="true" />
+          {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((corner) => <button
             key={corner}
             className={`token-handle token-handle-${corner}`}
             type="button"
@@ -256,7 +221,7 @@ export default function EditableIntro() {
             onPointerUp={stopResize}
             onPointerCancel={stopResize}
           />)}
-        </span>!
+        </span>
       </span>
     </h1>
     {selected && <div
@@ -282,10 +247,6 @@ export default function EditableIntro() {
     </div>}
   </>;
 }
-
-
-
-
 
 
 

@@ -4,7 +4,6 @@ import { FormEvent, useState } from 'react';
 import NextImage from 'next/image';
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   Clock3,
   FileText,
@@ -17,6 +16,7 @@ import {
 import { PageShell } from '@/components/site-shell';
 import EditableIntro from '@/components/EditableIntro';
 import Link from 'next/link';
+import WaitlistCard from '@/components/WaitlistCard';
 
 type FormValues = { name: string; email: string };
 
@@ -31,9 +31,21 @@ const mediaItems = [
 
 function WaitlistForm() {
   const [values, setValues] = useState<FormValues>({ name: '', email: '' });
-  const [submitted, setSubmitted] = useState(false);
-  function handleSubmit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!values.name.trim() || !values.email.trim()) return; setSubmitted(true); }
-  if (submitted) { return <div className="success-card"><span className="success-icon"><Check size={20} /></span><div><strong>You&apos;re on the list.</strong><p>We&apos;ll save a spot for you and send the next update to {values.email}.</p></div></div>; }
+  const [waitlistId, setWaitlistId] = useState<string | null>(null);
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!values.name.trim() || !values.email.trim()) return;
+    let number = 2998;
+    try {
+      const stored = Number(window.localStorage.getItem('shelf-waitlist-next-id'));
+      number = Number.isFinite(stored) && stored >= 2998 ? stored + 1 : 2998;
+      window.localStorage.setItem('shelf-waitlist-next-id', String(number));
+    } catch {
+      number = Math.floor(1000 + Math.random() * 9000);
+    }
+    setWaitlistId(`#${String(number).padStart(4, '0')}`);
+  }
+  if (waitlistId) return <WaitlistCard id={waitlistId} name={values.name.trim()} />;
   return <form className="waitlist-form" onSubmit={handleSubmit}><label><span>Name <b>*</b></span><input required value={values.name} onChange={(event) => setValues({ ...values, name: event.target.value })} placeholder="Fill your full name" /></label><label><span>Email <b>*</b></span><input required type="email" value={values.email} onChange={(event) => setValues({ ...values, email: event.target.value })} placeholder="Fill your email address" /></label><div className="split-fields"><label><span>Country</span><button type="button" className="select-field">IN&nbsp; India <ChevronDown size={16} /></button></label><label><span>Phone number</span><input placeholder="+91  Phone number" /></label></div><label className="check-row"><input type="checkbox" /><span>Agree to email notifications about blogs and updates.</span></label><label className="check-row"><input type="checkbox" required /><span>T&amp;C read</span></label><button className="dark-button form-submit" type="submit">Join waitlist <ArrowRight size={17} /></button></form>;
 }
 

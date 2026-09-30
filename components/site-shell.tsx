@@ -1,18 +1,27 @@
 ﻿'use client';
 
-import { KeyboardEvent as ReactKeyboardEvent, PointerEvent, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent as ReactKeyboardEvent, PointerEvent, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import BrickFooter from '@/components/BrickFooter';
+import StaggeredMenu from '@/components/StaggeredMenu.jsx';
 
 export function Logo({ inverse = false }: { inverse?: boolean }) {
   return <Link href="/" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`} aria-label="Shelf home"><Image className="brand-logo" src="/svg/shelf-logo.svg" alt="Shelf" width={124} height={41} unoptimized /></Link>;
 }
 
 export function SiteNav() {
-  const [open, setOpen] = useState(false);
-  return <nav className="site-nav content-width"><Logo /><div className={`nav-links ${open ? 'nav-links-open' : ''}`}><Link href="/about" onClick={() => setOpen(false)}>About</Link><Link href="/features" onClick={() => setOpen(false)}>Features</Link><Link href="/blog" onClick={() => setOpen(false)}>Blog</Link><Link className="nav-cta" href="/#join" onClick={() => setOpen(false)}>Join waitlist</Link></div><button className="menu-button" onClick={() => setOpen(!open)} aria-label="Toggle navigation">{open ? <X size={22} /> : <Menu size={22} />}</button></nav>;
+  const menuItems = [
+    { label: 'About', ariaLabel: 'Learn about Shelf', link: '/about' },
+    { label: 'Features', ariaLabel: 'Explore Shelf features', link: '/features' },
+    { label: 'Blog', ariaLabel: 'Read the Shelf blog', link: '/blog' },
+    { label: 'Join waitlist', ariaLabel: 'Join the Shelf waitlist', link: '/#join' },
+  ];
+  return <nav className="site-nav content-width">
+    <Logo />
+    <div className="nav-links"><Link href="/about">About</Link><Link href="/features">Features</Link><Link href="/blog">Blog</Link><Link className="nav-cta" href="/#join">Join waitlist</Link></div>
+    <StaggeredMenu position="right" items={menuItems} displaySocials={false} displayItemNumbering menuButtonColor="#292929" openMenuButtonColor="#292929" changeMenuColorOnOpen colors={['#f6e89a', '#ff923b']} accentColor="#ef5d5b" />
+  </nav>;
 }
 
 export function Footer() {
@@ -61,10 +70,18 @@ export function InteractiveScrollbar() {
         const touchesFooter = Boolean(footer && footer.top < viewport && footer.bottom > 0);
         let start = Math.min(100, (intersectionTop / viewport) * 100);
         let end = Math.max(start, Math.min(100, (intersectionBottom / viewport) * 100));
-        const visibleSlice = thumbHeight > 0 ? (5 / thumbHeight) * 100 : 0;
-        if (touchesFooter && end - start < visibleSlice) {
-          if (footer && footer.top >= 0) end = Math.min(100, start + visibleSlice);
-          else start = Math.max(0, end - visibleSlice);
+        const visibleSlice = thumbHeight > 0 ? (6 / thumbHeight) * 100 : 0;
+        if (touchesFooter && footer && end - start < visibleSlice) {
+          if (footer.bottom > viewport) {
+            end = 100;
+            start = Math.max(0, end - visibleSlice);
+          } else if (footer.top < 0) {
+            start = 0;
+            end = Math.min(100, visibleSlice);
+          } else {
+            end = Math.min(100, start + visibleSlice);
+            if (end - start < visibleSlice) start = Math.max(0, end - visibleSlice);
+          }
         }
         thumb.style.display = maxScroll > 0 ? 'block' : 'none';
         thumb.style.height = `${thumbHeight}px`;
