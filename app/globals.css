@@ -72,6 +72,7 @@ html::-webkit-scrollbar { display: none; }
 .custom-scrollbar-thumb:active { cursor: grabbing; }
 .custom-scrollbar-thumb-footer { background: white; }
 .social-icons-artwork { display: block; width: 172px; height: 22px; object-fit: contain; }
+.footer-wordmark { bottom: 22px; width: min(760px, 86vw); height: auto; font-size: initial; letter-spacing: normal; opacity: .92; }
 .phone-artwork { position: absolute; z-index: 2; left: 50%; bottom: -30px; transform: translateX(-50%); width: min(558px, 72vw); height: auto; max-height: 540px; object-fit: contain; }
 a, button, .custom-scrollbar-thumb { cursor: url('/svg/cursor.svg') 4 2, pointer; }
 @media (max-width: 820px) { .phone-artwork { width: 410px; max-width: 94vw; bottom: -10px; } }
