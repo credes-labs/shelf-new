@@ -10,13 +10,13 @@ type IntroState = {
 };
 type MenuName = 'font' | 'color' | null;
 
-const STORAGE_KEY = 'shelf-editable-intro-v1';
+const STORAGE_KEY = 'shelf-editable-intro-v2';
 const INITIAL: IntroState = {
   fields: { name: 'context' },
-  styled: { text: 'matters', font: 'Caveat', bold: false, italic: true, color: '#292929', size: 58 },
+  styled: { text: 'matters', font: 'Caveat', bold: false, italic: true, color: '#c8d7ff', size: 58 },
 };
 const FONTS: FontName[] = ['Caveat', 'Space Grotesk', 'Manrope', 'DM Sans', 'Outfit', 'Inter'];
-const COLORS = ['#292929', '#777777', '#e94f5a', '#f28a32', '#32885b', '#3978d0', '#8056bb', '#df6b9a'];
+const COLORS = ['#f4f5ff', '#c8d7ff', '#a9c0ff', '#8dd0ff', '#8edbe7', '#829bff', '#c4caff', '#dde3ff'];
 const FONT_STACKS: Record<FontName, string> = {
   Caveat: 'var(--font-caveat), cursive',
   'Space Grotesk': 'var(--font-space-grotesk), sans-serif',
@@ -250,8 +250,6 @@ export default function EditableIntro() {
     </div>}
   </>;
 }
-
-
 
 
 

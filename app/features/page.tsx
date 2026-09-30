@@ -1,6 +1,22 @@
 import { PageShell } from '@/components/site-shell';
-import StickerScatter from '@/components/StickerScatter';
 
-const features = [['Organize', 'Build collections that match how your mind works — eureka moments, ongoing context, and curated shelves — without rigid folders getting in the way.'], ['Find', 'Search and browse across everything you’ve saved — photos, notes, web links, music, and files — so the right piece of context shows up when it matters.'], ['Use', 'Open a collection, connect the dots, and turn saved context into your next decision, trip, project, or story.']];
+const features = [
+  ['Organize', 'Build collections that match how your mind works, without rigid folders getting in the way.'],
+  ['Find', 'Search across photos, notes, web links, and files to bring the right context back.'],
+  ['Use', 'Reconnect the details you saved and carry them into your next decision, trip, project, or story.'],
+];
 
-export default function FeaturesPage() { return <PageShell><article className="editorial-page content-width"><StickerScatter scene="editorial" /><p className="page-kicker">FEATURES</p><h1>Keep it. Find it. Use it.</h1><p className="page-lede">Shelf is a scrapbook for your digital life — capture freely, organize lightly, and pull the right context when you need it.</p>{features.map(([title, text]) => <section key={title}><h2>{title}</h2><p>{text}</p><ul><li>Save notes, links, screenshots, files, and moments in one place</li><li>Group related captures into collections that grow with you</li><li>Keep structure flexible so nothing feels buried</li></ul></section>)}</article></PageShell>; }
+export default function FeaturesPage() {
+  return (
+    <PageShell>
+      <article className="simple-page content-width">
+        <p className="eyebrow">Features</p>
+        <h1>Keep it. Find it. Use it.</h1>
+        <p>Shelf is a home for the things you want to remember. Capture freely, organize lightly, and find useful context again.</p>
+        <div className="feature-list">
+          {features.map(([title, text]) => <p key={title}><strong>{title}.</strong> {text}</p>)}
+        </div>
+      </article>
+    </PageShell>
+  );
+}

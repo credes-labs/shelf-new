@@ -1,7 +1,15 @@
 import { PageShell } from '@/components/site-shell';
-import StickerScatter from '@/components/StickerScatter';
-import Link from 'next/link';
 
 export default function AboutPage() {
-  return <PageShell><article className="editorial-page content-width"><StickerScatter scene="editorial" /><p className="page-kicker">ABOUT</p><h1>Context that stays with you</h1><p className="page-lede">Shelf is for the half-finished thoughts, saved tabs, screenshots, and quiet ideas you don&apos;t want to lose — organized the way you actually think.</p><section><h2>What we&apos;re building</h2><p>Most tools force you to file things away and hope you&apos;ll remember where they went. Shelf flips that: you capture freely, then find anything when it matters — through collections, context, and search that feel more like memory than a filing cabinet.</p><p>Notes, links, photos, files, and fleeting moments live together on your shelf. Structure adapts to how you think, not the other way around.</p></section><section><h2>Who&apos;s behind it</h2><p>Shelf is built by Credes Techlabs — a small team obsessed with the messy middle of personal knowledge: the stuff between “I&apos;ll save this later” and “where did I put that?”</p></section><section><h2>Where we are</h2><p>We&apos;re shaping Shelf in public, one useful detail at a time. Join the waitlist to follow along.</p><Link className="dark-button" href="/#join">Join waitlist</Link></section></article></PageShell>;
+  return (
+    <PageShell>
+      <article className="simple-page content-width">
+        <p className="eyebrow">About Shelf</p>
+        <h1>Context that stays with you.</h1>
+        <p>Shelf is for the half-finished thoughts, saved tabs, screenshots, and quiet ideas you don&apos;t want to lose — organized the way you actually think.</p>
+        <p>Most tools ask you to file things away and hope you remember where they went. Shelf starts with a simpler idea: save freely, then find what matters when you need it.</p>
+        <p>Notes, links, photos, files, and fleeting moments can live together. The structure adapts to how you think, not the other way around.</p>
+      </article>
+    </PageShell>
+  );
 }
