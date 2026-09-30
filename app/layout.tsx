@@ -1,24 +1,37 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Space_Grotesk } from 'next/font/google';
+
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Shelf — Keep your context. Find it when it matters.',
-  description: 'Shelf helps you save notes, links, screenshots, ideas, and moments into organized collections you can revisit any time.',
-  icons: { icon: '/svg/favicon.svg' },
+  title: 'Shelf — Keep your context',
+  description: 'A home for the things you mean to keep.',
+  openGraph: {
+    images: [
+      {
+        url: 'https://bolt.new/static/og_default.png',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: [
+      {
+        url: 'https://bolt.new/static/og_default.png',
+      },
+    ],
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>{children}</body>
+      <body className={spaceGrotesk.className}>{children}</body>
     </html>
   );
 }

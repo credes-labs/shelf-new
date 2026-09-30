@@ -12,9 +12,6 @@
 /.next/
 /out/
 
-# Local design references (keep out of version control)
-/public/references/
-
 # production
 /build
 
