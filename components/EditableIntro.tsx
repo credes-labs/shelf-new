@@ -1,19 +1,19 @@
 'use client';
 
-import { KeyboardEvent, PointerEvent, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent, PointerEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Bold, ChevronDown, Italic } from 'lucide-react';
 
 type FontName = 'Caveat' | 'Space Grotesk' | 'Manrope' | 'DM Sans' | 'Outfit' | 'Inter';
 type IntroState = {
   fields: { name: string };
-  styled: { text: string; font: FontName; bold: boolean; italic: boolean; color: string; size: number };
+  styled: { text: string; font: FontName; bold: boolean; italic: boolean; color: string; size: number; scaleX: number; scaleY: number };
 };
 type MenuName = 'font' | 'color' | null;
 
 const STORAGE_KEY = 'shelf-editable-intro-v1';
 const INITIAL: IntroState = {
   fields: { name: 'context' },
-  styled: { text: 'matters', font: 'Caveat', bold: false, italic: true, color: '#292929', size: 58 },
+  styled: { text: 'matters', font: 'Caveat', bold: false, italic: true, color: '#292929', size: 58, scaleX: 1, scaleY: 1 },
 };
 const FONTS: FontName[] = ['Caveat', 'Space Grotesk', 'Manrope', 'DM Sans', 'Outfit', 'Inter'];
 const COLORS = ['#292929', '#777777', '#e94f5a', '#f28a32', '#32885b', '#3978d0', '#8056bb', '#df6b9a'];
@@ -77,9 +77,11 @@ export default function EditableIntro() {
   const [selected, setSelected] = useState(false);
   const [menu, setMenu] = useState<MenuName>(null);
   const [toolbarPosition, setToolbarPosition] = useState({ left: 0, top: 0 });
+  const [tokenSize, setTokenSize] = useState({ width: 0, height: 0 });
   const tokenRef = useRef<HTMLSpanElement>(null);
+  const editorRef = useRef<HTMLSpanElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const resizeRef = useRef<{ pointerX: number; pointerY: number; size: number; corner: string } | null>(null);
+  const resizeRef = useRef<{ pointerX: number; pointerY: number; scaleX: number; scaleY: number; corner: string } | null>(null);
 
   useEffect(() => {
     let restored: IntroState | null = null;
@@ -95,6 +97,8 @@ export default function EditableIntro() {
             text: INITIAL.styled.text,
             font: FONTS.includes(parsed.styled.font) ? parsed.styled.font : INITIAL.styled.font,
             size: Math.max(14, Math.min(64, Number(parsed.styled.size) || INITIAL.styled.size)),
+            scaleX: Math.max(0.5, Math.min(2.5, Number(parsed.styled.scaleX) || 1)),
+            scaleY: Math.max(0.5, Math.min(2.5, Number(parsed.styled.scaleY) || 1)),
           },
         };
       }
@@ -110,6 +114,16 @@ export default function EditableIntro() {
     if (!ready) return;
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(intro)); } catch { /* Editing remains available without persistence. */ }
   }, [intro, ready]);
+
+  useLayoutEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const measure = () => setTokenSize({ width: editor.offsetWidth, height: editor.offsetHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(editor);
+    return () => observer.disconnect();
+  }, [intro.styled.font, intro.styled.bold, intro.styled.italic, intro.styled.size]);
 
   useEffect(() => {
     if (!selected) return;
@@ -133,7 +147,7 @@ export default function EditableIntro() {
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [selected, menu, intro.styled.font]);
+  }, [selected, menu, intro.styled.font, intro.styled.size, intro.styled.scaleX, intro.styled.scaleY]);
 
   useEffect(() => {
     if (!selected) return;
@@ -168,12 +182,16 @@ export default function EditableIntro() {
     if (!resize) return;
     const dx = event.clientX - resize.pointerX;
     const dy = event.clientY - resize.pointerY;
-    const direction = resize.corner.includes('left') ? -1 : 1;
-    updateStyled({ size: Math.round(Math.max(14, Math.min(64, resize.size + direction * (dx - dy) / 2))) });
+    const directionX = resize.corner.includes('left') ? -1 : 1;
+    const directionY = resize.corner.includes('top') ? -1 : 1;
+    updateStyled({
+      scaleX: Math.max(0.5, Math.min(2.5, resize.scaleX + directionX * dx / Math.max(40, tokenSize.width))),
+      scaleY: Math.max(0.5, Math.min(2.5, resize.scaleY + directionY * dy / Math.max(32, tokenSize.height))),
+    });
   }
   function startResize(event: PointerEvent<HTMLButtonElement>) {
     const corner = event.currentTarget.dataset.corner ?? 'bottom-right';
-    resizeRef.current = { pointerX: event.clientX, pointerY: event.clientY, size: intro.styled.size, corner };
+    resizeRef.current = { pointerX: event.clientX, pointerY: event.clientY, scaleX: intro.styled.scaleX, scaleY: intro.styled.scaleY, corner };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
   function stopResize() { resizeRef.current = null; }
@@ -198,6 +216,7 @@ export default function EditableIntro() {
         <span
           ref={tokenRef}
           className={`styled-token-wrap${selected ? ' is-selected' : ''}`}
+          style={tokenSize.width ? { width: tokenSize.width * intro.styled.scaleX + 4, height: tokenSize.height * intro.styled.scaleY } : undefined}
           role="group"
           tabIndex={0}
           aria-label="matters text styling"
@@ -205,8 +224,9 @@ export default function EditableIntro() {
           onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectStyled(); } }}
         >
           <span
+            ref={editorRef}
             className="styled-token-editor"
-            style={{ fontFamily: FONT_STACKS[intro.styled.font], fontWeight: intro.styled.bold ? 700 : 400, fontStyle: intro.styled.italic ? 'italic' : 'normal', color: intro.styled.color, fontSize: intro.styled.size }}
+            style={{ fontFamily: FONT_STACKS[intro.styled.font], fontWeight: intro.styled.bold ? 700 : 400, fontStyle: intro.styled.italic ? 'italic' : 'normal', color: intro.styled.color, fontSize: intro.styled.size, transform: `scale(${intro.styled.scaleX}, ${intro.styled.scaleY})`, transformOrigin: 'left center' }}
           >matters</span>
           <span className="token-selection-outline" aria-hidden="true" />
           {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((corner) => <button
@@ -247,7 +267,6 @@ export default function EditableIntro() {
     </div>}
   </>;
 }
-
 
 
 

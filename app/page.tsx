@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { PageShell } from '@/components/site-shell';
 import EditableIntro from '@/components/EditableIntro';
+import HeroTabs from '@/components/HeroTabs';
 import Link from 'next/link';
 import WaitlistCard from '@/components/WaitlistCard';
 
@@ -56,7 +57,7 @@ function ShelfCards() {
 export default function Home() {
   return <PageShell>
     <section className="hero content-width" id="about">
-      <div className="icon-row"><Music2 /><PhotoIcon /><NotebookPen /><FileText /><Link2 /></div>
+      <HeroTabs />
       <p className="eyebrow">Your personal context keeper</p>
       <EditableIntro />
       <p className="hero-copy">Shelf helps you save notes, links, screenshots, ideas, and moments into organized collections you can revisit any time.</p>
