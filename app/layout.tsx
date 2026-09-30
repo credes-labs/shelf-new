@@ -2,14 +2,22 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Shelf — Keep your context',
-  description: 'Save notes, links, screenshots, ideas, and moments into collections you can revisit anytime.',
+  title: 'Shelf — Keep your context. Find it when it matters.',
+  description: 'Shelf helps you save notes, links, screenshots, ideas, and moments into organized collections you can revisit any time.',
   icons: { icon: '/svg/favicon.svg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
