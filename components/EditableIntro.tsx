@@ -9,7 +9,6 @@ type IntroState = {
   styled: { text: string; font: FontName; bold: boolean; italic: boolean; color: string; size: number };
 };
 type MenuName = 'font' | 'color' | null;
-type TokenPosition = { x: number; y: number };
 
 const STORAGE_KEY = 'shelf-editable-intro-v1';
 const INITIAL: IntroState = {
@@ -78,11 +77,8 @@ export default function EditableIntro() {
   const [selected, setSelected] = useState(false);
   const [menu, setMenu] = useState<MenuName>(null);
   const [toolbarPosition, setToolbarPosition] = useState({ left: 0, top: 0 });
-  const [tokenPosition, setTokenPosition] = useState<TokenPosition>({ x: 0, y: 0 });
   const tokenRef = useRef<HTMLSpanElement>(null);
-  const lineRef = useRef<HTMLSpanElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const moveRef = useRef<{ pointerX: number; pointerY: number; x: number; y: number; minX: number; maxX: number; minY: number; maxY: number } | null>(null);
   const resizeRef = useRef<{ pointerX: number; pointerY: number; size: number; corner: string } | null>(null);
 
   useEffect(() => {
@@ -139,7 +135,7 @@ export default function EditableIntro() {
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [selected, menu, intro.styled.font, intro.styled.size, tokenPosition.x, tokenPosition.y]);
+  }, [selected, menu, intro.styled.font, intro.styled.size]);
 
   useEffect(() => {
     if (!selected) return;
@@ -183,33 +179,6 @@ export default function EditableIntro() {
     resizeRef.current = { pointerX: event.clientX, pointerY: event.clientY, size: intro.styled.size, corner };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
-  function moveToken(event: PointerEvent<HTMLSpanElement>) {
-    const move = moveRef.current;
-    if (!move) return;
-    setTokenPosition({
-      x: Math.max(move.minX, Math.min(move.maxX, move.x + event.clientX - move.pointerX)),
-      y: Math.max(move.minY, Math.min(move.maxY, move.y + event.clientY - move.pointerY)),
-    });
-  }
-  function startMove(event: PointerEvent<HTMLSpanElement>) {
-    if (!selected || (event.target as HTMLElement).closest('.token-handle')) return;
-    const token = tokenRef.current?.getBoundingClientRect();
-    const line = lineRef.current?.getBoundingClientRect();
-    if (!token || !line) return;
-    event.preventDefault();
-    moveRef.current = {
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-      x: tokenPosition.x,
-      y: tokenPosition.y,
-      minX: tokenPosition.x + line.left - token.left,
-      maxX: tokenPosition.x + line.right - token.right,
-      minY: tokenPosition.y + line.top - token.top,
-      maxY: tokenPosition.y + line.bottom - token.bottom,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-  function stopMove() { moveRef.current = null; }
   function stopResize() { resizeRef.current = null; }
   function menuKeys(event: KeyboardEvent<HTMLDivElement>) {
     const options = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]'));
@@ -228,19 +197,14 @@ export default function EditableIntro() {
   return <>
     <h1 className="editable-intro">
       <span className="intro-line">Keep your <EditableField value={intro.fields.name} label="First editable phrase" onChange={(value) => updateField('name', value)} />.</span>
-      <span ref={lineRef} className="intro-line">Find it when it{' '}
+      <span className="intro-line">Find it when it{' '}
         <span
           ref={tokenRef}
           className={`styled-token-wrap${selected ? ' is-selected' : ''}`}
-          style={{ transform: `translate3d(${tokenPosition.x}px, ${tokenPosition.y}px, 0)` }}
           role="group"
           tabIndex={0}
           aria-label="matters text styling"
           onClick={selectStyled}
-          onPointerDown={startMove}
-          onPointerMove={moveToken}
-          onPointerUp={stopMove}
-          onPointerCancel={stopMove}
           onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectStyled(); } }}
         >
           <span
@@ -286,7 +250,6 @@ export default function EditableIntro() {
     </div>}
   </>;
 }
-
 
 
 

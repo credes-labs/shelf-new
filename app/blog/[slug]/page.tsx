@@ -1,4 +1,5 @@
 import { PageShell } from '@/components/site-shell';
+import StickerScatter from '@/components/StickerScatter';
 import { notFound } from 'next/navigation';
 
 const posts: Record<string, { title: string; date: string; kicker: string; body: string[] }> = {
@@ -35,7 +36,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   if (!post) notFound();
   return (
     <PageShell>
-      <article className="editorial-page article-page content-width">
+      <article className="editorial-page article-page content-width"><StickerScatter scene="editorial" />
         <p className="page-kicker">{post.kicker}</p>
         <h1>{post.title}</h1>
         <small className="article-date">{post.date}</small>

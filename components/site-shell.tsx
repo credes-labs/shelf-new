@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import BrickFooter from '@/components/BrickFooter';
 import StaggeredMenu from '@/components/StaggeredMenu.jsx';
+import StickerScatter from '@/components/StickerScatter';
 
 export function Logo({ inverse = false }: { inverse?: boolean }) {
   return <Link href="/" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`} aria-label="Shelf home"><Image className="brand-logo" src="/svg/shelf-logo.svg" alt="Shelf" width={124} height={41} unoptimized /></Link>;
@@ -30,6 +31,7 @@ export function Footer() {
       <div className="footer-brand"><Logo inverse /><div className="social-row"><Image className="social-icons-artwork" src="/svg/socials.svg" alt="Shelf social platforms" width={172} height={22} unoptimized /></div><small>© Credes Techlabs 2026</small></div>
       <div className="footer-links"><div><b>Company</b><Link href="/about">About us</Link><Link href="/#join">Contact</Link><Link href="/#join">Security</Link><Link href="/#join">Privacy Policy</Link><Link href="/#join">Terms and Conditions</Link></div><div><b>Download</b><Link href="/#join">iOS</Link><Link href="/#join">Web</Link><Link href="/#join">Mac OS</Link></div></div>
     </div>
+    <StickerScatter scene="footer" />
     <BrickFooter />
   </footer>;
 }

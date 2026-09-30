@@ -12,6 +12,7 @@ const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 export const metadata: Metadata = {
   title: 'Shelf — Keep your context',
   description: 'Save notes, links, screenshots, ideas, and moments into organized collections you can revisit anytime.',
+  icons: { icon: '/svg/favicon.svg' },
   openGraph: {
     images: [
       {
