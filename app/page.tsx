@@ -1,19 +1,21 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import NextImage from 'next/image';
 import {
   ArrowRight,
   Check,
   ChevronDown,
   Clock3,
   FileText,
-  Image,
+  Image as PhotoIcon,
   Link2,
   Music2,
   NotebookPen,
   Search,
 } from 'lucide-react';
 import { PageShell } from '@/components/site-shell';
+import EditableIntro from '@/components/EditableIntro';
 import Link from 'next/link';
 
 type FormValues = { name: string; email: string };
@@ -23,7 +25,7 @@ const mediaItems = [
   { label: 'File', title: 'visa PDF scan', color: 'yellow', icon: FileText },
   { label: 'Note', title: 'hospital visit', color: 'coral', icon: NotebookPen },
   { label: 'Link', title: 'Mt. Fuji trail map', color: 'blue', icon: Link2 },
-  { label: 'Photo', title: 'FamilyMart receipt', color: 'green', icon: Image },
+  { label: 'Photo', title: 'FamilyMart receipt', color: 'green', icon: PhotoIcon },
   { label: 'Note', title: 'souvenir shop list', color: 'peach', icon: NotebookPen },
 ];
 
@@ -42,15 +44,15 @@ function ShelfCards() {
 export default function Home() {
   return <PageShell>
     <section className="hero content-width" id="about">
-      <div className="icon-row"><Music2 /><Image /><NotebookPen /><FileText /><Link2 /></div>
+      <div className="icon-row"><Music2 /><PhotoIcon /><NotebookPen /><FileText /><Link2 /></div>
       <p className="eyebrow">Your personal context keeper</p>
-      <h1>Keep your context.<br />Find it when it <em>matters!</em></h1>
+      <EditableIntro />
       <p className="hero-copy">Shelf helps you save notes, links, screenshots, ideas, and moments into organized collections you can revisit any time.</p>
       <a href="#join" className="dark-button hero-button">Join waitlist <ArrowRight size={17} /></a>
       <div className="hero-art">
         <span className="sticker sticker-clock"><Clock3 size={48} /></span>
         <span className="sticker sticker-note">ideas<br />to revisit</span>
-        <img className="phone-artwork" src="/svg/phone.svg" alt="Shelf app on a phone" />
+        <NextImage className="phone-artwork" src="/svg/phone.svg" alt="Shelf app on a phone" width={558} height={843} unoptimized />
         <span className="sticker sticker-ticket">SPECIAL<br /><b>$ 2.00</b></span>
       </div>
     </section>

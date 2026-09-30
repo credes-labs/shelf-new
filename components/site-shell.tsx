@@ -1,11 +1,13 @@
-'use client';
+﻿'use client';
 
-import { PointerEvent, useEffect, useRef, useState } from 'react';
-import { Menu, Sparkles, X } from 'lucide-react';
+import { KeyboardEvent as ReactKeyboardEvent, PointerEvent, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
+import BrickFooter from '@/components/BrickFooter';
 
 export function Logo({ inverse = false }: { inverse?: boolean }) {
-  return <Link href="/" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`} aria-label="Shelf home"><img className="brand-logo" src="/svg/shelf-logo.svg" alt="Shelf" width="124" height="41" /></Link>;
+  return <Link href="/" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`} aria-label="Shelf home"><Image className="brand-logo" src="/svg/shelf-logo.svg" alt="Shelf" width={124} height={41} unoptimized /></Link>;
 }
 
 export function SiteNav() {
@@ -14,43 +16,13 @@ export function SiteNav() {
 }
 
 export function Footer() {
-  return <footer className="site-footer"><div className="footer-inner content-width"><div className="footer-brand"><Logo inverse /><div className="social-row"><img className="social-icons-artwork" src="/svg/socials.svg" alt="Shelf social platforms" /></div><small>© Credes Techlabs 2026</small></div><div className="footer-links"><div><b>Company</b><Link href="/about">About us</Link><Link href="/#join">Contact</Link><Link href="/#join">Security</Link><Link href="/#join">Privacy Policy</Link><Link href="/#join">Terms and Conditions</Link></div><div><b>Download</b><Link href="/#join">iOS</Link><Link href="/#join">Web</Link><Link href="/#join">Mac OS</Link></div></div></div><div className="footer-art"><div className="arch arch-one" /><div className="arch arch-two" /><div className="arch arch-three" /><Sparkles className="footer-sparkle" size={52} /></div><img className="footer-wordmark" src="/svg/shelf-logo.svg" alt="" aria-hidden="true" /><FooterStickers /></footer>;
-}
-
-function FooterStickers() {
-  const footerRef = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ id: number; offsetX: number; offsetY: number } | null>(null);
-  const [positions, setPositions] = useState<Record<number, { left: number; top: number }>>({});
-  const stickers = [
-    { id: 1, text: '●‿●', className: 'sticker-smile', label: 'Drag smile sticker' },
-    { id: 2, text: 'SPECIAL\n$ 2.00', className: 'sticker-ticket-footer', label: 'Drag ticket sticker' },
-    { id: 3, text: '✦', className: 'sticker-flower', label: 'Drag star sticker' },
-  ];
-  function startDrag(event: PointerEvent<HTMLButtonElement>, id: number) {
-    const parent = footerRef.current;
-    if (!parent) return;
-    const parentRect = parent.getBoundingClientRect();
-    const itemRect = event.currentTarget.getBoundingClientRect();
-    const left = itemRect.left - parentRect.left;
-    const top = itemRect.top - parentRect.top;
-    drag.current = { id, offsetX: event.clientX - itemRect.left, offsetY: event.clientY - itemRect.top };
-    setPositions((current) => ({ ...current, [id]: current[id] ?? { left, top } }));
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-  function moveDrag(event: PointerEvent<HTMLButtonElement>) {
-    if (!drag.current || !footerRef.current) return;
-    const activeDrag = drag.current;
-    const parentRect = footerRef.current.getBoundingClientRect();
-    const nextPosition = {
-      left: Math.max(0, Math.min(parentRect.width - 50, event.clientX - parentRect.left - activeDrag.offsetX)),
-      top: Math.max(0, Math.min(parentRect.height - 50, event.clientY - parentRect.top - activeDrag.offsetY)),
-    };
-    setPositions((current) => ({ ...current, [activeDrag.id]: nextPosition }));
-  }
-  return <div ref={footerRef} className="footer-stickers" aria-label="Moveable footer stickers">{stickers.map((sticker) => {
-    const position = positions[sticker.id];
-    return <button key={sticker.id} type="button" className={`footer-sticker ${sticker.className} footer-sticker-draggable`} style={position ? { left: position.left, top: position.top, right: 'auto', bottom: 'auto' } : undefined} onPointerDown={(event) => startDrag(event, sticker.id)} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }} aria-label={sticker.label}>{sticker.text}</button>;
-  })}</div>;
+  return <footer className="site-footer">
+    <div className="footer-inner content-width">
+      <div className="footer-brand"><Logo inverse /><div className="social-row"><Image className="social-icons-artwork" src="/svg/socials.svg" alt="Shelf social platforms" width={172} height={22} unoptimized /></div><small>© Credes Techlabs 2026</small></div>
+      <div className="footer-links"><div><b>Company</b><Link href="/about">About us</Link><Link href="/#join">Contact</Link><Link href="/#join">Security</Link><Link href="/#join">Privacy Policy</Link><Link href="/#join">Terms and Conditions</Link></div><div><b>Download</b><Link href="/#join">iOS</Link><Link href="/#join">Web</Link><Link href="/#join">Mac OS</Link></div></div>
+    </div>
+    <BrickFooter />
+  </footer>;
 }
 
 export function FooterScrollTheme() {
@@ -65,25 +37,43 @@ export function FooterScrollTheme() {
 }
 
 export function InteractiveScrollbar() {
-  const [metrics, setMetrics] = useState({ top: 0, height: 48, visible: false, footerVisible: false });
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const metrics = useRef({ top: 0, height: 0, range: 0, maxScroll: 0 });
   const drag = useRef<{ pointerY: number; trackTop: number } | null>(null);
   useEffect(() => {
     let frame = 0;
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
+        const thumb = thumbRef.current;
+        const track = trackRef.current;
+        if (!thumb || !track) return;
         const viewport = window.innerHeight;
         const documentHeight = document.documentElement.scrollHeight;
         const maxScroll = Math.max(0, documentHeight - viewport);
-        const thumbHeight = Math.max(48, (viewport * viewport) / documentHeight);
+        const thumbHeight = Math.max(64, (viewport * viewport) / documentHeight);
         const trackRange = Math.max(0, viewport - thumbHeight);
         const footer = document.querySelector('.site-footer')?.getBoundingClientRect();
-        setMetrics({
-          top: maxScroll ? (window.scrollY / maxScroll) * trackRange : 0,
-          height: thumbHeight,
-          visible: maxScroll > 0,
-          footerVisible: Boolean(footer && footer.top < viewport && footer.bottom > 0),
-        });
+        const thumbTop = maxScroll ? (window.scrollY / maxScroll) * trackRange : 0;
+        const intersectionTop = footer ? Math.max(0, Math.min(viewport, footer.top)) : viewport;
+        const intersectionBottom = footer ? Math.max(0, Math.min(viewport, footer.bottom)) : 0;
+        const touchesFooter = Boolean(footer && footer.top < viewport && footer.bottom > 0);
+        let start = Math.min(100, (intersectionTop / viewport) * 100);
+        let end = Math.max(start, Math.min(100, (intersectionBottom / viewport) * 100));
+        const visibleSlice = thumbHeight > 0 ? (5 / thumbHeight) * 100 : 0;
+        if (touchesFooter && end - start < visibleSlice) {
+          if (footer && footer.top >= 0) end = Math.min(100, start + visibleSlice);
+          else start = Math.max(0, end - visibleSlice);
+        }
+        thumb.style.display = maxScroll > 0 ? 'block' : 'none';
+        thumb.style.height = `${thumbHeight}px`;
+        thumb.style.transform = `translate3d(0, ${thumbTop}px, 0)`;
+        thumb.style.backgroundImage = touchesFooter
+          ? `linear-gradient(to bottom, var(--orange) 0%, var(--orange) ${start}%, #fff ${start}%, #fff ${end}%, var(--orange) ${end}%, var(--orange) 100%)`
+          : 'none';
+        track.setAttribute('aria-valuenow', `${Math.round(maxScroll ? (window.scrollY / maxScroll) * 100 : 0)}`);
+        metrics.current = { top: thumbTop, height: thumbHeight, range: trackRange, maxScroll };
       });
     };
     update();
@@ -100,14 +90,21 @@ export function InteractiveScrollbar() {
   }, []);
   function moveThumb(event: PointerEvent<HTMLDivElement>) {
     if (!drag.current) return;
-    const trackRange = Math.max(1, window.innerHeight - metrics.height);
-    const nextTop = Math.max(0, Math.min(trackRange, event.clientY - drag.current.pointerY + drag.current.trackTop));
-    const progress = nextTop / trackRange;
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    window.scrollTo(0, progress * maxScroll);
+    const nextTop = Math.max(0, Math.min(metrics.current.range, event.clientY - drag.current.pointerY + drag.current.trackTop));
+    document.documentElement.scrollTop = (nextTop / Math.max(1, metrics.current.range)) * metrics.current.maxScroll;
   }
-  return <div className="custom-scrollbar" aria-hidden="true">
-    {metrics.visible && <div className={`custom-scrollbar-thumb ${metrics.footerVisible ? 'custom-scrollbar-thumb-footer' : ''}`} style={{ top: metrics.top, height: metrics.height }} onPointerDown={(event) => { drag.current = { pointerY: event.clientY, trackTop: metrics.top }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={moveThumb} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} />}
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const keyMoves: Record<string, number> = { ArrowDown: 80, ArrowUp: -80, PageDown: window.innerHeight * 0.85, PageUp: -window.innerHeight * 0.85 };
+    if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      document.documentElement.scrollTop = event.key === 'Home' ? 0 : document.documentElement.scrollHeight;
+    } else if (keyMoves[event.key]) {
+      event.preventDefault();
+      document.documentElement.scrollTop += keyMoves[event.key];
+    }
+  }
+  return <div ref={trackRef} className="custom-scrollbar" role="scrollbar" aria-label="Page scroll position" aria-orientation="vertical" aria-controls="top" aria-valuemin={0} aria-valuemax={100} aria-valuenow={0} tabIndex={0} onKeyDown={handleKeyDown}>
+    <div ref={thumbRef} className="custom-scrollbar-thumb" onPointerDown={(event) => { drag.current = { pointerY: event.clientY, trackTop: metrics.current.top }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={moveThumb} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} />
   </div>;
 }
 
