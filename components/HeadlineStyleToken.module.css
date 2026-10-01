@@ -1,0 +1,34 @@
+.root { position: relative; display: inline-block; white-space: nowrap; vertical-align: baseline; }
+.word { position: relative; z-index: 1; display: inline-block; cursor: pointer; outline: none; }
+.word:focus-visible { text-shadow: 0 0 0.02em currentColor; }
+.selection { position: absolute; z-index: 2; inset: -7px -6px; border: 1.5px solid #2196f3; border-radius: 2px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 120ms ease, visibility 120ms ease; }
+.visible { opacity: 1; visibility: visible; }
+.selection i { position: absolute; width: 8px; height: 8px; background: #2196f3; border: 1px solid rgba(255,255,255,.9); }
+.selection i:nth-child(1) { left: -4px; top: -4px; }
+.selection i:nth-child(2) { right: -4px; top: -4px; }
+.selection i:nth-child(3) { left: -4px; bottom: -4px; }
+.selection i:nth-child(4) { right: -4px; bottom: -4px; }
+.toolbar { position: absolute; z-index: 20; top: calc(100% + 17px); left: 50%; display: flex; align-items: center; gap: 4px; padding: 6px 8px; color: #262626; background: #fff; border: 1px solid #e6e6e6; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.16); font: 13px/1.1 Arial, sans-serif; user-select: none; white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, 4px); transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease; }
+.toolbarVisible { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, 0); }
+.toolbar button { min-height: 28px; border: 0; border-radius: 7px; background: transparent; color: inherit; cursor: pointer; }
+.toolbar button:hover, .toolbar button:focus-visible, .active { background: #f0f1f3 !important; }
+.toolbar button:focus-visible { outline: 2px solid #2196f3; outline-offset: 1px; }
+.controlWrap { position: relative; }
+.fontButton { display: flex; align-items: center; gap: 7px; padding: 0 7px; font-size: 12px; }
+.chevron { color: #777; font: 13px Arial, sans-serif; }
+.divider { width: 1px; height: 19px; margin: 0 2px; background: #e6e6e6; }
+.toggle { width: 28px; padding: 0; font: bold 16px Georgia, serif !important; }
+.toggle i { font: italic bold 16px Georgia, serif; }
+.colorButton { display: flex; align-items: center; gap: 6px; padding: 0 5px; }
+.colorButton i, .colorList i { width: 13px; height: 13px; border: 1px solid; border-radius: 50%; }
+.popover { position: absolute; z-index: 24; bottom: calc(100% + 9px); left: 50%; padding: 6px; background: #fff; border: 1px solid #e6e6e6; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.16); transform: translateX(-50%); }
+.fontList { display: flex; flex-direction: column; min-width: 164px; }
+.fontList button { padding: 7px 9px; text-align: left; font-size: 15px; }
+.colorList { display: grid; grid-template-columns: repeat(5, 26px); gap: 3px; }
+.colorList button { display: grid; width: 26px; height: 26px; place-items: center; padding: 0; }
+.colorList i { width: 17px; height: 17px; }
+@media (max-width: 480px) {
+  .toolbar { gap: 2px; padding: 5px 6px; }
+  .fontButton { gap: 4px; padding-inline: 5px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .selection, .toolbar { transition: none; } }
