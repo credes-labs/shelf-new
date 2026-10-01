@@ -14,6 +14,7 @@
 .footerContent { position: relative; z-index: 2; max-width: 1280px; margin: 0 auto; }
 .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 700; letter-spacing: -1.8px; }
 .logo img { display: block; width: 124px; height: auto; filter: brightness(0) saturate(100%) invert(17%) sepia(94%) saturate(3766%) hue-rotate(235deg) brightness(78%) contrast(105%); }
+.logo :global(.scroll-shelf-logo) { display: block; width: 124px; height: 41px; border: 0; opacity: 1; }
 .logoMark { width: 30px; height: 30px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 7px; transform: rotate(30deg); font-size: 17px; letter-spacing: -1px; }
 .socials { display: flex; align-items: center; gap: 17px; margin-top: 24px; }
 .socials a { min-width: 15px; text-align: center; font-size: 16px; font-weight: 700; }
@@ -45,6 +46,7 @@
   .halfCut { display: block; }
   .stage { z-index: 1; }
   .logo img { width: 112px; }
+  .logo :global(.scroll-shelf-logo) { width: 112px; height: 37px; }
   .socials { gap: 13px; }
   .stage { overflow: hidden; }
   .footer::before { content: ''; position: absolute; z-index: 0; inset: 0 0 auto; height: 60%; background-color: #fff; background-image: url('/right_visual.png'); background-size: cover; background-position: center; background-repeat: no-repeat; background-blend-mode: darken; opacity: .28; -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%); pointer-events: none; }

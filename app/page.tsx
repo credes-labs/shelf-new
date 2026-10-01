@@ -7,9 +7,23 @@ import {
 } from 'lucide-react';
 import BrickFooter from '../components/BrickFooter';
 import HeadlineStyleToken from '../components/HeadlineStyleToken';
+import ScrollShelfLogo from '../components/ScrollShelfLogo';
 
 type HeroSticker = { file: string; name: string };
 type StickerScene = { behind: HeroSticker[]; front: HeroSticker[] };
+
+function phoneScreenMotion(index: number, progress: number, maxBlur: number) {
+  const delta = index - progress;
+  const fold = Math.min(1, Math.abs(delta));
+  const hinge = Math.sin(fold * Math.PI);
+  const angle = Math.max(-89, Math.min(89, delta * 90));
+  return {
+    opacity: Math.cos(fold * Math.PI / 2),
+    filter: `blur(${(hinge * maxBlur).toFixed(2)}px) brightness(${(1 - hinge * 0.16).toFixed(3)})`,
+    transform: `perspective(1100px) rotateY(${angle.toFixed(2)}deg) scale(${Math.max(.92, 1 - fold * .08).toFixed(3)})`,
+    zIndex: 10 - Math.round(fold * 10),
+  };
+}
 
 const stickerScenes: StickerScene[] = [
   {
@@ -163,7 +177,7 @@ export default function Home() {
         <div className="hero-blue">
           <header className="nav-wrap">
             <a className="brand" href="#top" aria-label="Shelf home">
-              <img src="/svg/shelf%20logo.svg" width="124" height="41" alt="" />
+              <ScrollShelfLogo theme="light" />
             </a>
             <div className="hero-dots" aria-label="Hero sections">
               {[0, 1, 2, 3].map((index) => <button key={index} type="button" aria-label={`Go to hero section ${index + 1}`} aria-pressed={activeDot === index} className={activeDot === index ? 'active' : ''} style={{ '--dot-color': dotColors[activeDot] } as React.CSSProperties} onClick={() => scrollToDot(index)} />)}
@@ -181,11 +195,12 @@ export default function Home() {
                 </div>
               </Fragment>)}
               <div className="phone" aria-label={`iPhone preview ${activeHeadline + 1}`}>
-                {screenImages.map((src, index) => {
-                  const weight = weights[index];
-                  const blur = Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - index))) * 7;
-                  return <img key={src} className="phone-svg" src={src} alt={index === activeHeadline ? `Shelf app screen ${index + 1}` : ''} aria-hidden={index !== activeHeadline} draggable="false" style={{ opacity: weight, filter: `blur(${blur}px)`, transform: `translate3d(0, ${(index - scrollProgress) * 11}px, 0)` }} />;
-                })}
+                <div className="phone-screen-window">
+                  {screenImages.map((src, index) => {
+                    return <img key={src} className="phone-svg" data-screen={index} src={src} alt={index === activeHeadline ? `Shelf app screen ${index + 1}` : ''} aria-hidden={index !== activeHeadline} draggable="false" style={phoneScreenMotion(index, scrollProgress, 11)} />;
+                  })}
+                </div>
+                <img className="phone-boundary" src="/svg/iphone%20boundary.svg" alt="" draggable="false" />
               </div>
             </div>
 
@@ -206,7 +221,7 @@ export default function Home() {
         </div>
         <div className="mobile-story">
           <header className="mobile-story-nav nav-wrap">
-            <a className="brand" href="#top" aria-label="Shelf home"><img src="/svg/shelf%20logo.svg" width="124" height="41" alt="" /></a>
+            <a className="brand" href="#top" aria-label="Shelf home"><ScrollShelfLogo /></a>
             <div className="hero-dots" aria-label="Hero sections">
               {[0, 1, 2, 3].map(index => <button key={index} type="button" aria-label={`Go to hero section ${index + 1}`} aria-pressed={activeDot === index} className={activeDot === index ? 'active' : ''} style={{ '--dot-color': dotColors[activeDot] } as React.CSSProperties} onClick={() => scrollToDot(index)} />)}
             </div>
@@ -227,7 +242,12 @@ export default function Home() {
               <div className="sticker-set sticker-set-front">
                 {scene.front.map(sticker => <img key={sticker.name} className={`sticker sticker-${sticker.name}`} src={`/svg/${encodeURIComponent(sticker.file)}`} alt="" draggable="false" />)}
               </div>
-              <img className="mobile-story-phone" src={screenImages[index]} alt="" draggable="false" />
+              <div className="mobile-phone-frame">
+                <div className="phone-screen-window">
+                  <img className="mobile-story-phone" src={screenImages[index]} alt="" draggable="false" style={phoneScreenMotion(index, scrollProgress, 8)} />
+                </div>
+                <img className="phone-boundary" src="/svg/iphone%20boundary.svg" alt="" draggable="false" />
+              </div>
             </div>
           </section>)}
         </div>

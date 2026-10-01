@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { createBricks, moveBrick, type Brick } from '../lib/bricks';
+import ScrollShelfLogo from './ScrollShelfLogo';
 import styles from './BrickFooter.module.css';
 
 type State = { bricks: Brick[]; removed: Brick[]; cols: number; width: number };
@@ -85,7 +86,7 @@ export default function BrickFooter() {
 
   return <footer className={styles.footer}>
     <div className={styles.footerContent}>
-      <a href="#top" className={styles.logo} aria-label="Shelf home"><img src="/svg/shelf%20logo.svg" alt="Shelf" /></a>
+      <a href="#top" className={styles.logo} aria-label="Shelf home"><ScrollShelfLogo /></a>
       <nav className={styles.socials} aria-label="Social links">
         <a href="#instagram" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/svg/social%20media%20icons.svg#instagram" /></svg></a>
         <a href="#threads" aria-label="Threads"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/svg/social%20media%20icons.svg#threads" /></svg></a>
