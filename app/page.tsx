@@ -1,28 +1,123 @@
 'use client';
 
-import { FormEvent, Fragment, useEffect, useRef, useState } from 'react';
+import { FormEvent, Fragment, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Check,
 } from 'lucide-react';
 import BrickFooter from '../components/BrickFooter';
 import HeadlineStyleToken from '../components/HeadlineStyleToken';
-import ScrollShelfLogo from '../components/ScrollShelfLogo';
+import { ShelfLogo } from '../components/shelf-logo/ShelfLogo';
 
 type HeroSticker = { file: string; name: string };
 type StickerScene = { behind: HeroSticker[]; front: HeroSticker[] };
 
-function phoneScreenMotion(index: number, progress: number, maxBlur: number) {
-  const delta = index - progress;
-  const fold = Math.min(1, Math.abs(delta));
-  const hinge = Math.sin(fold * Math.PI);
-  const angle = Math.max(-89, Math.min(89, delta * 90));
-  return {
-    opacity: Math.cos(fold * Math.PI / 2),
-    filter: `blur(${(hinge * maxBlur).toFixed(2)}px) brightness(${(1 - hinge * 0.16).toFixed(3)})`,
-    transform: `perspective(1100px) rotateY(${angle.toFixed(2)}deg) scale(${Math.max(.92, 1 - fold * .08).toFixed(3)})`,
-    zIndex: 10 - Math.round(fold * 10),
-  };
+function PhoneScreens({ progress, screenImages, mobile = false }: { progress: number; screenImages: string[]; mobile?: boolean }) {
+  const current = Math.min(screenImages.length - 1, Math.floor(progress));
+  const phase = current === screenImages.length - 1 ? 0 : progress - current;
+  const eased = phase * phase * (3 - 2 * phase);
+  const screenClass = mobile ? 'mobile-story-phone' : 'phone-svg';
+
+  return <>
+    <div className="phone-screen-window" aria-hidden="true">
+      {screenImages.map((src, index) => {
+        const opacity = index === current
+          ? 1 - eased
+          : index === current + 1
+            ? eased
+            : index === screenImages.length - 1 && progress >= screenImages.length - 1
+              ? 1
+              : 0;
+        const distance = Math.min(1, Math.abs(index - progress));
+        const blur = Math.sin(distance * Math.PI) * 1.2;
+        const brightness = 1 - Math.sin(distance * Math.PI) * 0.025;
+        return <img
+          key={src}
+          className={screenClass}
+          src={src}
+          alt=""
+          aria-hidden="true"
+          data-active={index === Math.round(progress)}
+          draggable="false"
+          style={{ opacity, filter: `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(3)})`, zIndex: index + 1 }}
+        />;
+      })}
+    </div>
+    <img className="phone-boundary" src="/svg/iphone%20boundary.svg" alt="" draggable="false" />
+  </>;
+}
+
+const stickerChats: Record<string, [string, string]> = {
+  spider: ['found a tiny roommate', 'They have been here a while.'],
+  alarm: ['gentle reminder', 'You can take your time.'],
+  coin: ['keeping this close', 'A little thing with a story.'],
+  special: ['saved for later', 'Future you says thanks.'],
+  polaroid: ['this one feels familiar', 'Some moments stick.'],
+  receipt: ['proof it happened', 'Filed under: good days.'],
+  smile: ['sending a little joy', 'Right back at you.'],
+  flower: ['picked this for you', 'It brightens the collection.'],
+  pink: ['a small favorite', 'Saved exactly where it belongs.'],
+  yellow: ['this caught your eye', 'Of course it did.'],
+  'cd-blue': ['what are we listening to?', 'Something on repeat.'],
+  'cd-red': ['putting this on', 'Track one, obviously.'],
+  'cd-yellow': ['a sunny soundtrack', 'Saved for the right mood.'],
+  ipod: ['playlist from another time', 'Still knows every word.'],
+  notes: ['quick thought', 'Good thing you saved it.'],
+  key: ['this opens something', 'Maybe a very good memory.'],
+  cassette: ['mixtape energy', 'Side A is the best side.'],
+  calculator: ['doing the math', 'The answer is: keep it.'],
+  controller: ['one more round?', 'After you finish scrolling.'],
+  clothes: ['outfit idea saved', 'Future plans look good.'],
+  'blue-flower': ['a blue little bloom', 'Growing on your shelf.'],
+  wallet: ['keeping it together', 'One pocket at a time.'],
+  matcha: ['a little pick-me-up', 'This is your sign to pause.'],
+  umbrella: ['just in case', 'Forecast: probably fine.'],
+  piggybank: ['saving something good', 'Every little bit counts.'],
+  notepad: ['note to self', 'You already remembered.'],
+};
+
+function InteractiveSticker({ sticker }: { sticker: HeroSticker }) {
+  const [open, setOpen] = useState(false);
+  const [first, second] = stickerChats[sticker.name] ?? ['saved to your shelf', 'You can find it here later.'];
+
+  return (
+    <button
+      type="button"
+      className={`sticker sticker-${sticker.name}`}
+      aria-label={`${sticker.name.replace(/-/g, ' ')} sticker. ${first}. ${second}`}
+      aria-expanded={open}
+      data-open={open}
+      onPointerEnter={event => { if (event.pointerType !== 'touch') setOpen(true); }}
+      onPointerLeave={event => { if (event.pointerType !== 'touch') setOpen(false); }}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+      onClick={() => setOpen(true)}
+    >
+      <img className="sticker-art" src={`/svg/${encodeURIComponent(sticker.file)}`} alt="" draggable="false" />
+      <span className="sticker-chat" aria-hidden={!open}>
+        <span className="sticker-chat-green">{first}</span>
+        <span className="sticker-chat-white">{second}</span>
+      </span>
+    </button>
+  );
+}
+
+function moveStickerParallax(event: ReactPointerEvent<HTMLElement>) {
+  if (event.pointerType === 'touch') return;
+  const bounds = event.currentTarget.getBoundingClientRect();
+  const x = event.clientX - bounds.left - bounds.width / 2;
+  const y = event.clientY - bounds.top - bounds.height / 2;
+  event.currentTarget.style.setProperty('--cursor-x-front', `${x * 0.04}px`);
+  event.currentTarget.style.setProperty('--cursor-y-front', `${y * 0.04}px`);
+  event.currentTarget.style.setProperty('--cursor-x-behind', `${x * 0.022}px`);
+  event.currentTarget.style.setProperty('--cursor-y-behind', `${y * 0.022}px`);
+}
+
+function resetStickerParallax(event: ReactPointerEvent<HTMLElement>) {
+  event.currentTarget.style.setProperty('--cursor-x-front', '0px');
+  event.currentTarget.style.setProperty('--cursor-y-front', '0px');
+  event.currentTarget.style.setProperty('--cursor-x-behind', '0px');
+  event.currentTarget.style.setProperty('--cursor-y-behind', '0px');
 }
 
 const stickerScenes: StickerScene[] = [
@@ -177,7 +272,7 @@ export default function Home() {
         <div className="hero-blue">
           <header className="nav-wrap">
             <a className="brand" href="#top" aria-label="Shelf home">
-              <ScrollShelfLogo theme="light" />
+              <ShelfLogo className="shelf-logo" />
             </a>
             <div className="hero-dots" aria-label="Hero sections">
               {[0, 1, 2, 3].map((index) => <button key={index} type="button" aria-label={`Go to hero section ${index + 1}`} aria-pressed={activeDot === index} className={activeDot === index ? 'active' : ''} style={{ '--dot-color': dotColors[activeDot] } as React.CSSProperties} onClick={() => scrollToDot(index)} />)}
@@ -185,22 +280,17 @@ export default function Home() {
           </header>
 
           <div className="hero-grid">
-            <div className="hero-art" aria-label="Shelf app preview">
+            <div className="hero-art" aria-label="Shelf app preview" onPointerMove={moveStickerParallax} onPointerLeave={resetStickerParallax}>
               {stickerScenes.map((scene, index) => <Fragment key={index}>
-                <div className="sticker-set sticker-set-behind" data-slide={index} aria-hidden="true" style={stickerLayerStyle(index)}>
-                  {scene.behind.map(sticker => <img key={sticker.name} className={`sticker sticker-${sticker.name}`} src={`/svg/${encodeURIComponent(sticker.file)}`} alt="" draggable="false" />)}
+                <div className="sticker-set sticker-set-behind" data-slide={index} style={stickerLayerStyle(index)}>
+                  {scene.behind.map(sticker => <InteractiveSticker key={sticker.name} sticker={sticker} />)}
                 </div>
-                <div className="sticker-set sticker-set-front" data-slide={index} aria-hidden="true" style={stickerLayerStyle(index)}>
-                  {scene.front.map(sticker => <img key={sticker.name} className={`sticker sticker-${sticker.name}`} src={`/svg/${encodeURIComponent(sticker.file)}`} alt="" draggable="false" />)}
+                <div className="sticker-set sticker-set-front" data-slide={index} style={stickerLayerStyle(index)}>
+                  {scene.front.map(sticker => <InteractiveSticker key={sticker.name} sticker={sticker} />)}
                 </div>
               </Fragment>)}
               <div className="phone" aria-label={`iPhone preview ${activeHeadline + 1}`}>
-                <div className="phone-screen-window">
-                  {screenImages.map((src, index) => {
-                    return <img key={src} className="phone-svg" data-screen={index} src={src} alt={index === activeHeadline ? `Shelf app screen ${index + 1}` : ''} aria-hidden={index !== activeHeadline} draggable="false" style={phoneScreenMotion(index, scrollProgress, 11)} />;
-                  })}
-                </div>
-                <img className="phone-boundary" src="/svg/iphone%20boundary.svg" alt="" draggable="false" />
+                <PhoneScreens progress={scrollProgress} screenImages={screenImages} />
               </div>
             </div>
 
@@ -221,12 +311,23 @@ export default function Home() {
         </div>
         <div className="mobile-story">
           <header className="mobile-story-nav nav-wrap">
-            <a className="brand" href="#top" aria-label="Shelf home"><ScrollShelfLogo /></a>
+            <a className="brand" href="#top" aria-label="Shelf home"><ShelfLogo className="shelf-logo" /></a>
             <div className="hero-dots" aria-label="Hero sections">
               {[0, 1, 2, 3].map(index => <button key={index} type="button" aria-label={`Go to hero section ${index + 1}`} aria-pressed={activeDot === index} className={activeDot === index ? 'active' : ''} style={{ '--dot-color': dotColors[activeDot] } as React.CSSProperties} onClick={() => scrollToDot(index)} />)}
             </div>
           </header>
           {stickerScenes.map((scene, index) => <section className="mobile-story-step" key={index} aria-label={`Shelf story ${index + 1}`}>
+            <div className="mobile-story-art" onPointerMove={moveStickerParallax} onPointerLeave={resetStickerParallax}>
+              <div className="sticker-set sticker-set-behind">
+                {scene.behind.map(sticker => <InteractiveSticker key={sticker.name} sticker={sticker} />)}
+              </div>
+              <div className="sticker-set sticker-set-front">
+                {scene.front.map(sticker => <InteractiveSticker key={sticker.name} sticker={sticker} />)}
+              </div>
+              <div className="mobile-phone-frame">
+                <PhoneScreens progress={scrollProgress} screenImages={screenImages} mobile />
+              </div>
+            </div>
             <div className="mobile-story-copy">
               {index === 0 && <h1>Keep your<br />context.<br />Find it when it<br /><HeadlineStyleToken /></h1>}
               {index === 1 && <h1>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>}
@@ -235,23 +336,10 @@ export default function Home() {
                 {status === 'success' ? <div className="success-inline"><span><Check size={16} /></span><strong>You’re on the list.</strong></div> : <form onSubmit={handleSubmit}><div className="email-row"><input id="email-mobile" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="Your email address" required /><button type="submit" disabled={status === 'loading'} aria-label="Join the waitlist">{status === 'loading' ? '...' : <ArrowRight size={18} />}</button></div>{status === 'error' && <p className="form-error">Please try again.</p>}</form>}
               </div>}
             </div>
-            <div className="mobile-story-art" aria-hidden="true">
-              <div className="sticker-set sticker-set-behind">
-                {scene.behind.map(sticker => <img key={sticker.name} className={`sticker sticker-${sticker.name}`} src={`/svg/${encodeURIComponent(sticker.file)}`} alt="" draggable="false" />)}
-              </div>
-              <div className="sticker-set sticker-set-front">
-                {scene.front.map(sticker => <img key={sticker.name} className={`sticker sticker-${sticker.name}`} src={`/svg/${encodeURIComponent(sticker.file)}`} alt="" draggable="false" />)}
-              </div>
-              <div className="mobile-phone-frame">
-                <div className="phone-screen-window">
-                  <img className="mobile-story-phone" src={screenImages[index]} alt="" draggable="false" style={phoneScreenMotion(index, scrollProgress, 8)} />
-                </div>
-                <img className="phone-boundary" src="/svg/iphone%20boundary.svg" alt="" draggable="false" />
-              </div>
-            </div>
           </section>)}
         </div>
       </section>
+      <div className="mobile-footer-gap" aria-hidden="true" />
       <BrickFooter />
     </main>
   );

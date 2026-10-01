@@ -59,7 +59,7 @@ export default function HeadlineStyleToken() {
       onKeyDown={keyDown}
       style={{ fontFamily: style.font === 'Georgia' ? 'Georgia, serif' : `"${style.font}", ${style.font === 'Caveat' ? 'cursive' : 'sans-serif'}`, fontWeight: style.bold ? 700 : 400, fontStyle: style.italic ? 'italic' : 'normal', color: style.color }}
     >matters.</span>
-    <span className={`${styles.selection} ${styles.visible}`} aria-hidden="true"><i /><i /><i /><i /></span>
+    <span className={`${styles.selection} ${selected ? styles.visible : ''}`} aria-hidden="true"><i /><i /><i /><i /></span>
     <div className={`${styles.toolbar} ${selected ? styles.toolbarVisible : ''}`} role="toolbar" aria-label="Style matters" onPointerDown={event => event.preventDefault()}>
       <div className={styles.controlWrap}>
         <button type="button" className={`${styles.fontButton} ${menu === 'font' ? styles.active : ''}`} aria-haspopup="listbox" aria-expanded={menu === 'font'} onClick={() => setMenu(menu === 'font' ? null : 'font')} style={{ fontFamily: style.font }}>{style.font}<span className={styles.chevron}>⌄</span></button>

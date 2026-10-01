@@ -9,8 +9,22 @@ body { margin: 0; background: var(--paper); color: var(--ink); font-family: Aria
 a { color: inherit; text-decoration: none; }
 button, input { font: inherit; }
 .site-shell { min-height: 100vh; overflow: hidden; }
-.scroll-shelf-logo { display: block; flex: 0 0 auto; opacity: 1; }
-.scroll-shelf-logo svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.mobile-footer-gap { display: none; }
+.shelf-logo { display: block; flex: 0 0 auto; width: 112px; height: auto; overflow: visible; color: currentColor; }
+.phone-boundary { position: absolute; inset: 0; z-index: 3; display: block; width: 100%; height: 100%; transform: scale(1.03); pointer-events: none; }
+.sticker { position: absolute; display: block; margin: 0; padding: 0; border: 0; appearance: none; background: transparent; cursor: pointer; user-select: none; pointer-events: auto; transform-origin: center; scale: 1; transition: translate 180ms ease, scale 170ms cubic-bezier(.2,.8,.2,1), filter 170ms ease; }
+.sticker-set-behind .sticker { translate: var(--cursor-x-behind, 0px) var(--cursor-y-behind, 0px); }
+.sticker-set-front .sticker { translate: var(--cursor-x-front, 0px) var(--cursor-y-front, 0px); }
+.sticker-art { display: block; width: 100%; height: auto; pointer-events: none; filter: drop-shadow(0 3px 5px rgba(10, 13, 70, .15)); transition: filter 170ms ease; }
+.sticker-chat { position: absolute; z-index: 15; left: 50%; bottom: calc(100% + 10px); display: grid; width: max-content; max-width: min(220px, 70vw); gap: 5px; color: #151515; font: 12px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-align: left; white-space: normal; opacity: 0; visibility: hidden; pointer-events: none; translate: -50% 5px; transition: opacity 140ms ease, translate 140ms ease, visibility 140ms ease; filter: drop-shadow(0 5px 11px rgba(0,0,0,.17)); }
+.sticker-chat-green, .sticker-chat-white { padding: 8px 11px; }
+.sticker-chat-green { justify-self: end; border-radius: 16px 16px 5px 16px; background: #34c759; color: white; }
+.sticker-chat-white { justify-self: start; border-radius: 16px 16px 16px 5px; background: white; color: #1c1c1e; }
+.sticker[data-open="true"] { z-index: 16; scale: 1.12; }
+.sticker[data-open="true"] .sticker-art { filter: drop-shadow(0 10px 15px rgba(10,13,70,.28)); }
+.sticker[data-open="true"] .sticker-chat { opacity: 1; visibility: visible; translate: -50% 0; }
+.sticker:focus-visible { outline: 2px solid white; outline-offset: 4px; border-radius: 4px; }
+.sticker-set:focus-within { z-index: 6 !important; }
 .hero { min-height: 100vh; display: grid; grid-template-columns: 62% 38%; background: var(--blue); }
 .hero-blue { min-width: 0; min-height: 100vh; color: #fff; position: relative; }
 .nav-wrap { height: 78px; display: flex; align-items: center; justify-content: space-between; padding: 0 5.5vw; position: absolute; inset: 0 0 auto; z-index: 5; }
@@ -46,7 +60,7 @@ button, input { font: inherit; }
   .phone { position: relative; z-index: 2; flex: 0 0 var(--phone-width); width: var(--phone-width); height: auto; margin-left: var(--phone-left); padding: 0; background: transparent; border-radius: 0; box-shadow: none; transform: translateY(1.5vh); }
   .phone::before, .phone::after { display: none; }
   .phone-svg { display: block; width: 100%; height: auto; }
-  .sticker { position: absolute; height: auto; pointer-events: none; user-select: none; }
+  .sticker { position: absolute; height: auto; pointer-events: auto; user-select: none; }
   .sticker.behind { z-index: 1; }
   .sticker.over { z-index: 3; }
   .sticker-spider { left: calc(var(--phone-left) - 47px); top: 8%; width: 62px; transform: rotate(-12deg); }
@@ -84,7 +98,7 @@ button, input { font: inherit; }
   .phone { position: relative; z-index: 2; flex: 0 0 var(--phone-width); width: var(--phone-width); height: auto; margin-left: var(--phone-left); padding: 0; background: transparent; border-radius: 0; box-shadow: none; transform: none; }
   .phone::before, .phone::after { display: none; }
   .phone-svg { display: block; width: 100%; height: auto; }
-  .sticker { position: absolute; height: auto; pointer-events: none; user-select: none; }
+  .sticker { position: absolute; height: auto; pointer-events: auto; user-select: none; }
   .sticker.behind { z-index: 1; }
   .sticker.over { z-index: 3; }
   .sticker-spider { left: 7%; top: 9%; width: 52px; transform: rotate(-12deg); }
@@ -139,7 +153,7 @@ button, input { font: inherit; }
     overflow: hidden;
     border-radius: 13.5% / 6.35%;
     z-index: 2;
-    background: transparent;
+    background: #fff;
   }
   .phone-svg {
     position: absolute;
@@ -147,22 +161,10 @@ button, input { font: inherit; }
     width: 100%;
     height: 100%;
     object-fit: fill;
-    transform-origin: left center;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    will-change: opacity, filter, transform;
+    will-change: opacity, filter;
+    mix-blend-mode: plus-lighter;
   }
-  .phone-boundary {
-    position: absolute;
-    inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    z-index: 3;
-    pointer-events: none;
-    transform: scale(1.03);
-  }
-  .brand .scroll-shelf-logo { display: block; width: 112px; height: 37px; border: 0; opacity: 1; }
+  .brand .shelf-logo { width: 112px; height: 37px; }
   .sticker-set {
     position: absolute;
     inset: 0;
@@ -199,19 +201,19 @@ button, input { font: inherit; }
     position: relative;
     overflow: hidden;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    padding: 82px 20px 12px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 76px 18px 14px;
     background: var(--blue);
   }
-  .mobile-story-copy { position: relative; z-index: 4; }
-  .mobile-story-copy h1 { margin: 0; font-size: clamp(31px, 8.8vw, 42px); letter-spacing: -2px; line-height: .96; font-weight: 800; }
+  .mobile-story-copy { position: relative; z-index: 4; grid-row: 2; width: 100%; max-width: 460px; margin: 0 auto; padding-bottom: clamp(8px, 1.5svh, 14px); text-align: center; }
+  .mobile-story-copy h1 { margin: 0; font-size: clamp(29px, 8vw, 39px); letter-spacing: -1.8px; line-height: .98; font-weight: 800; }
   .mobile-story-copy h1 em { font-family: Georgia, serif; font-weight: 400; }
-  .mobile-waitlist { margin-top: 13px; max-width: 230px; }
-  .mobile-story-art { position: relative; justify-self: stretch; align-self: end; height: min(47svh, 390px); min-height: 0; overflow: visible; }
+  .mobile-waitlist { margin: 14px auto 0; max-width: 230px; }
+  .mobile-story-art { position: relative; grid-row: 1; justify-self: stretch; align-self: stretch; width: 100%; height: 100%; min-height: 0; overflow: visible; }
   .mobile-story-art .sticker-set { position: absolute; inset: 0; pointer-events: none; }
   .mobile-story-art .sticker-set-behind { z-index: 1; }
   .mobile-story-art .sticker-set-front { z-index: 3; }
-  .mobile-story-phone { position: absolute; z-index: 2; height: min(47svh, 390px); width: auto; max-width: 52vw; object-fit: contain; left: 50%; bottom: 0; transform: translateX(-50%); filter: drop-shadow(0 12px 18px rgba(10, 13, 70, .24)); }
   .mobile-story-art .sticker-cd-blue { left: 7%; top: 8%; width: 56px; transform: rotate(-18deg); }
   .mobile-story-art .sticker-cd-red { left: 77%; top: 12%; width: 54px; transform: rotate(12deg); }
   .mobile-story-art .sticker-cd-yellow { left: 12%; top: 74%; width: 52px; transform: rotate(16deg); }
@@ -232,19 +234,18 @@ button, input { font: inherit; }
     position: absolute;
     z-index: 2;
     left: 50%;
-    bottom: 0;
-    width: min(48vw, 22.8svh, 188px);
+    top: 50%;
+    width: min(54vw, 24.6svh, 210px);
     aspect-ratio: 409 / 843;
     background: transparent;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     filter: drop-shadow(0 12px 18px rgba(10, 13, 70, .24));
   }
   .mobile-phone-frame .phone-screen-window { left: 2.684%; top: 1.173%; width: 94.632%; height: 97.654%; }
-  .mobile-phone-frame .phone-screen-window { position: absolute; overflow: hidden; border-radius: 13.5% / 6.35%; background: transparent; }
-  .mobile-phone-frame .mobile-story-phone { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; object-fit: fill; transform-origin: left center; backface-visibility: hidden; -webkit-backface-visibility: hidden; filter: none; }
-  .mobile-phone-frame .phone-boundary { position: absolute; inset: 0; display: block; width: 100%; height: 100%; z-index: 3; pointer-events: none; transform: scale(1.03); }
+  .mobile-phone-frame .phone-screen-window { position: absolute; overflow: hidden; border-radius: 13.5% / 6.35%; background: #fff; }
+  .mobile-phone-frame .mobile-story-phone { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; object-fit: fill; will-change: opacity, filter; mix-blend-mode: plus-lighter; }
   .mobile-phone-frame .phone-screen-window { z-index: 2; }
-  .brand .scroll-shelf-logo { display: block; width: 100px; height: 33px; border: 0; opacity: 1; }
+  .brand .shelf-logo { width: 100px; height: auto; }
   .hero-copy-slides { display: grid; width: 100%; }
   .hero-copy-slide { grid-area: 1 / 1; }
   .sticker-set[data-slide="1"], .sticker-set[data-slide="2"] { display: none; }
@@ -257,9 +258,19 @@ button, input { font: inherit; }
     background: #aeb3ed;
   }
   .hero-dots button.active { background: var(--dot-color, #fff); }
+  .mobile-footer-gap { display: block; height: clamp(44px, 7svh, 76px); background: var(--blue); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .phone-svg, .hero-copy-slide, .sticker-set { filter: none !important; transform: none !important; transition: none !important; }
+  .phone-svg, .mobile-story-phone { filter: none !important; transition: none !important; }
+  .phone-svg:not([data-active="true"]), .mobile-story-phone:not([data-active="true"]) { opacity: 0 !important; }
+  .phone-svg[data-active="true"], .mobile-story-phone[data-active="true"] { opacity: 1 !important; }
+  .hero-copy-slide, .sticker-set { transition: none !important; }
+  .sticker { transition: none !important; translate: none !important; }
+  .sticker-chat { transition: none !important; }
   .hero-dots button { transition: none !important; }
+}
+
+@media (hover: hover) {
+  .sticker-set:has(.sticker:hover) { z-index: 6 !important; }
 }
