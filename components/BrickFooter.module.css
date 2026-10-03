@@ -6,6 +6,9 @@
   background: var(--brick-footer-bg, #fffff2);
   user-select: none;
   -webkit-user-select: none;
+  /* Skip rendering work while far below the fold; same pixels when scrolled to. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
 }
 
 .section :global(.brick-footer-art) {

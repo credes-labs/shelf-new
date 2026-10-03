@@ -1,11 +1,15 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
-import { playUiSound } from '../lib/ui-sound';
+import { playUiSound, ensureAudioUnlocked } from '../lib/ui-sound';
 import WaitlistProof from './WaitlistProof';
+import type { PeelDef } from './ModalPeels';
 import modal from './WaitlistModal.module.css';
+
+// Peel + drag code only downloads when the popup opens, never on page load.
+const ModalPeels = lazy(() => import('./ModalPeels'));
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -20,19 +24,20 @@ const COUNTRIES = [
   { code: 'BR', name: 'Brazil', dial: '+55' },
 ];
 
-/** Sticker collage for the popup (file + position class). */
-const COLLAGE: { file: string; className: string }[] = [
-  { file: 'pinkstamp.svg', className: 's0' },
-  { file: 'smile sticker.svg', className: 's1' },
-  { file: 'yellowstamp.svg', className: 's2' },
-  { file: 'piggybank.svg', className: 's3' },
-  { file: 'coin.svg', className: 's4' },
-  { file: 'key.svg', className: 's5' },
-  { file: 'polaroid.svg', className: 's6' },
-  { file: 'umbrella.svg', className: 's7' },
-  { file: 'blue flower.svg', className: 's8' },
-  { file: 'cassete.svg', className: 's9' },
-  { file: 'calculator.svg', className: 's10' },
+/** Peelable stickers floating on the popup (file + placement + variation). */
+const PEELS: PeelDef[] = [
+  { file: 'smile sticker.svg', place: 'f0', width: 102, rotate: 12, peelDirection: 0, hover: 28, active: 44 },
+  { file: 'polaroid.svg', place: 'f1', width: 88, rotate: -9, peelDirection: 90, hover: 32, active: 48 },
+  { file: 'red CD.svg', place: 'f2', width: 112, rotate: 16, peelDirection: 180, hover: 24, active: 40 },
+  { file: 'key.svg', place: 'f3', width: 75, rotate: -18, peelDirection: 270, hover: 30, active: 46 },
+  { file: 'piggybank.svg', place: 'f4', width: 95, rotate: -7, peelDirection: 90, hover: 26, active: 42 },
+  { file: 'coin.svg', place: 'f5', width: 78, rotate: 14, peelDirection: 180, hover: 32, active: 50 },
+  { file: 'umbrella.svg', place: 'f6', width: 90, rotate: -12, peelDirection: 0, hover: 28, active: 44 },
+  { file: 'blue flower.svg', place: 'f7', width: 77, rotate: 20, peelDirection: 270, hover: 24, active: 40 },
+  { file: 'wallet.svg', place: 'f8', width: 87, rotate: 8, peelDirection: 90, hover: 30, active: 46 },
+  { file: 'cassete.svg', place: 'f9', width: 105, rotate: -11, peelDirection: 180, hover: 26, active: 42 },
+  { file: 'matcha.svg', place: 'f10', width: 78, rotate: -16, peelDirection: 0, hover: 32, active: 48 },
+  { file: 'controller.svg', place: 'f11', width: 94, rotate: 10, peelDirection: 270, hover: 28, active: 44 },
 ];
 
 export default function WaitlistSignup({ id, className = '' }: { id: string; className?: string }) {
@@ -44,8 +49,8 @@ export default function WaitlistSignup({ id, className = '' }: { id: string; cla
   const [phone, setPhone] = useState('');
   const [notify, setNotify] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
-  const [count, setCount] = useState<number | undefined>();
   const [joined, setJoined] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setMounted(true), []);
@@ -82,29 +87,69 @@ export default function WaitlistSignup({ id, className = '' }: { id: string; cla
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // Mock mode: no requests yet. A completed form goes straight to the card.
+    // Prime the audio context inside the tap gesture so the celebration plays.
+    ensureAudioUnlocked();
     setStatus('loading');
+    setNotice(null);
     playUiSound('click');
-    try {
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, country, phone, notify }),
-      });
-      if (!response.ok) throw new Error('Unable to join');
-      const result = (await response.json()) as { count?: number | null };
-      if (typeof result.count === 'number') setCount(result.count);
+    window.setTimeout(() => {
       setJoined(true);
       setStatus('success');
       playUiSound('success');
       // Celebrate again as the card lands.
       window.setTimeout(() => playUiSound('success'), 450);
+    }, 450);
+  }
+
+  const dial = COUNTRIES.find((c) => c.code === country)?.dial ?? '+91';
+
+  async function downloadCard() {
+    playUiSound('click');
+    try {
+      const response = await fetch('/svg/waitlistingcard.svg');
+      if (!response.ok) throw new Error('download failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'shelf-waitlist-card.svg';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+      setNotice('Card downloaded.');
+      playUiSound('success');
     } catch {
-      setStatus('error');
+      setNotice('Could not download the card.');
       playUiSound('error');
     }
   }
 
-  const dial = COUNTRIES.find((c) => c.code === country)?.dial ?? '+91';
+  async function shareCard() {
+    playUiSound('click');
+    const firstName = name ? ` ${name.split(' ')[0]}` : '';
+    const shareText = `I${firstName} just joined the Shelf waitlist — save everything, find anything.`;
+    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+    try {
+      if (nav.share) {
+        await nav.share({
+          title: 'Shelf waitlist',
+          text: shareText,
+          url: window.location.origin,
+        });
+        setNotice('Thanks for sharing!');
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${shareText} ${window.location.origin}`);
+        setNotice('Invite link copied to clipboard.');
+        playUiSound('success');
+      } else {
+        setNotice('Sharing is not available on this device.');
+      }
+    } catch {
+      /* user dismissed the sheet — stay quiet */
+    }
+  }
 
   return (
     <div className={`waitlist-signup ${className}`.trim()}>
@@ -122,12 +167,12 @@ export default function WaitlistSignup({ id, className = '' }: { id: string; cla
           <Image src="/svg/join%20waitlist.svg" alt="Join waitlist" width={172} height={70} unoptimized />
         </button>
       )}
-      <WaitlistProof count={count} joined={joined} className="waitlist-proof" />
+      <WaitlistProof joined={joined} className="waitlist-proof" />
 
       {mounted && modalOpen && createPortal(
         <div className={modal.backdrop} onClick={closeModal}>
           <div
-            className={modal.panel}
+            className={modal.sheet}
             role="dialog"
             aria-modal="true"
             aria-labelledby={`${id}-title`}
@@ -154,26 +199,24 @@ export default function WaitlistSignup({ id, className = '' }: { id: string; cla
                   {name ? `You’re in, ${name.split(' ')[0]}!` : 'You’re in!'}
                 </h2>
                 <p className={modal.successText}>We saved your spot. Watch your inbox for early access.</p>
+                <div className={modal.cardActions}>
+                  <button className={modal.cardButton} type="button" onClick={() => void downloadCard()}>
+                    Download card
+                  </button>
+                  <button className={modal.cardButton} type="button" onClick={() => void shareCard()}>
+                    Share
+                  </button>
+                </div>
+                {notice && <p className={modal.notice} role="status">{notice}</p>}
                 <button className={modal.successClose} type="button" onClick={closeModal}>
                   Done
                 </button>
               </div>
             ) : (
               <>
-                <div className={modal.collage} aria-hidden="true">
-                  {COLLAGE.map((sticker, index) => (
-                    <img
-                      key={sticker.file}
-                      className={`${modal.sticker} ${modal[sticker.className]}`}
-                      style={{ '--d': `${index * 55}ms` } as React.CSSProperties}
-                      src={`/svg/${encodeURIComponent(sticker.file)}`}
-                      alt=""
-                      draggable="false"
-                    />
-                  ))}
-                  <span className={`${modal.bubble} ${modal.b0}`}>Stop wasting time</span>
-                  <span className={`${modal.bubble} ${modal.b1}`}>Deal of the pile</span>
-                </div>
+                <Suspense fallback={null}>
+                  <ModalPeels peels={PEELS} />
+                </Suspense>
 
                 <form className={modal.form} onSubmit={(event) => void submit(event)}>
                   <h2 id={`${id}-title`} className={modal.title}>
@@ -264,7 +307,7 @@ export default function WaitlistSignup({ id, className = '' }: { id: string; cla
                       {status === 'loading' ? 'Joining…' : 'Join waitlist!!!!'}
                     </button>
 
-                    <WaitlistProof count={count} joined={joined} tone="light" size={34} className={modal.proof} />
+                    <WaitlistProof fetchCount={false} joined={joined} tone="dark" size={34} className={modal.proof} />
                   </div>
                 </form>
               </>

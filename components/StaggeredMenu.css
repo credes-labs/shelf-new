@@ -332,6 +332,11 @@
 }
 
 @media (max-width: 1024px) {
+  /* Single visible child (logo is hidden on mobile) — keep it parked right. */
+  .staggered-menu-header {
+    justify-content: flex-end;
+  }
+
   .staggered-menu-panel,
   .sm-prelayers {
     width: min(84vw, 420px);
@@ -351,6 +356,10 @@
 }
 
 @media (max-width: 640px) {
+  .staggered-menu-header {
+    justify-content: flex-end;
+  }
+
   .staggered-menu-panel,
   .sm-prelayers {
     width: min(84vw, 420px);

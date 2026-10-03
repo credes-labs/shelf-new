@@ -5,6 +5,10 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: { unoptimized: true },
+  experimental: {
+    // Tree-shake barrel imports so only used icons ship to the client.
+    optimizePackageImports: ['lucide-react'],
+  },
 };
 
 module.exports = nextConfig;

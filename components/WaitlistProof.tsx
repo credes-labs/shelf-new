@@ -18,6 +18,32 @@ const DEFAULT_PEOPLE: Person[] = [
 const YOU: Person = { name: "You're in" };
 const TINTS = ['#ffd6e8', '#cfe8ff', '#d9f7c8', '#ffe9a8', '#e2d6ff', '#ffd9c2'];
 
+// Shared across every proof instance (desktop + mobile + modal mount together):
+// one request per minute no matter how many counters are on screen.
+let sharedCount: { value: number; at: number } | null = null;
+let inflightCount: Promise<number | null> | null = null;
+const COUNT_TTL = 60_000;
+
+function loadCount(): Promise<number | null> {
+  if (sharedCount && Date.now() - sharedCount.at < COUNT_TTL) {
+    return Promise.resolve(sharedCount.value);
+  }
+  if (!inflightCount) {
+    inflightCount = fetch('/api/waitlist', { cache: 'no-store' })
+      .then((response) => (response.ok ? (response.json() as Promise<{ count?: number | null }>) : null))
+      .then((result) => {
+        const value = typeof result?.count === 'number' ? result.count : null;
+        if (value !== null) sharedCount = { value, at: Date.now() };
+        return value;
+      })
+      .catch(() => null)
+      .finally(() => {
+        inflightCount = null;
+      });
+  }
+  return inflightCount;
+}
+
 function useTween(initial: number) {
   const [value, setValue] = useState(initial);
   const current = useRef(initial);
@@ -64,12 +90,14 @@ type Props = {
   count?: number;
   /** Shows the joining user's avatar after a successful signup. */
   joined?: boolean;
+  /** Set false to skip the count request entirely (mock mode). */
+  fetchCount?: boolean;
   tone?: 'light' | 'dark';
   size?: number;
   className?: string;
 };
 
-export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined = false, tone = 'dark', size = 30, className }: Props) {
+export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined = false, fetchCount = true, tone = 'dark', size = 30, className }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const gate = useRef<'idle' | 'armed' | 'in'>('idle');
   const [fetchedCount, setFetchedCount] = useState<number | null>(null);
@@ -82,17 +110,18 @@ export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined =
   const { value, set: setValue, to: tweenTo } = useTween(0);
 
   useEffect(() => {
-    if (typeof count === 'number') {
-      setFetchedCount(count);
+    if (typeof count === 'number' || !fetchCount) {
+      if (typeof count === 'number') setFetchedCount(count);
       return;
     }
-    const controller = new AbortController();
-    fetch('/api/waitlist', { cache: 'no-store', signal: controller.signal })
-      .then(response => response.ok ? response.json() as Promise<{ count?: number | null }> : null)
-      .then(result => { if (typeof result?.count === 'number') setFetchedCount(result.count); })
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, [count]);
+    let cancelled = false;
+    loadCount().then((value) => {
+      if (!cancelled && value !== null) setFetchedCount(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [count, fetchCount]);
 
   useEffect(() => {
     const element = rootRef.current;

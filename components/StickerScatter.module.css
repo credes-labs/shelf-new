@@ -1,0 +1,41 @@
+/* Floating peelable stickers over content pages. The layer lets clicks
+   pass through everywhere except on the stickers themselves. */
+
+.scatter {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scatter :global(.draggable) {
+  pointer-events: auto;
+}
+
+/* Keep vertical page scroll working when a touch starts on a sticker. */
+.scatter :global(.sticker-container) {
+  touch-action: pan-y;
+}
+
+.p0 { left: 82%; top: 150px; }
+.p1 { left: 62%; top: 330px; }
+.p2 { left: 86%; top: 470px; }
+.p3 { left: 4%; top: 260px; }
+.p4 { left: 76%; top: 680px; }
+.p5 { left: 8%; top: 560px; }
+.p6 { left: 60%; top: 920px; }
+.p7 { left: 14%; top: 830px; }
+
+@media (max-width: 900px) {
+  .p1, .p5, .p6 { display: none; }
+  .p0 { left: 74%; top: 120px; }
+  .p2 { left: 80%; top: 420px; }
+  .p3 { left: 2%; top: 300px; }
+  .p4 { left: 68%; top: 640px; }
+  .p7 { left: 6%; top: 780px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scatter { display: none; }
+}

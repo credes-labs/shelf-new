@@ -19,6 +19,9 @@ let context: AudioContext | null = null;
 let unlockInstalled = false;
 let soundEnabled = true;
 
+/** Sounds that fired while the context was locked; replayed on the next gesture. */
+const pendingPlays: { kind: UiSound; options: PlayOptions }[] = [];
+
 /** Round-robin counters guarantee audible variation instead of pure randomness. */
 const variationIndex: Record<string, number> = {};
 /** Last play timestamp per kind, for throttling. */
@@ -101,17 +104,39 @@ function installUnlock(): void {
   const unlock = () => {
     try {
       const audio = getContext();
-      if (audio && audio.state === 'suspended') void audio.resume().catch(() => undefined);
+      if (!audio) return;
+      if (audio.state === 'suspended') {
+        // Must run inside a user gesture on iOS — these listeners are gestures.
+        void audio.resume().then(flushPending).catch(() => undefined);
+      } else flushPending();
     } catch {
       /* decorative audio only */
     }
   };
   // A hover alone does not count as an autoplay gesture, so unlock on any
   // real interaction. Afterwards the shared context stays warm for hovers.
+  // touchend is the reliable unlock moment on iOS Safari.
   window.addEventListener('pointerdown', unlock, { passive: true });
   window.addEventListener('touchstart', unlock, { passive: true });
+  window.addEventListener('touchend', unlock, { passive: true });
   window.addEventListener('keydown', unlock);
   window.addEventListener('wheel', unlock, { passive: true });
+  window.addEventListener('pageshow', unlock);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) unlock();
+  });
+}
+
+/** Replay sounds that fired while the context was still locked. */
+function flushPending(): void {
+  if (!context || context.state !== 'running' || !pendingPlays.length) return;
+  const jobs = pendingPlays.splice(0, pendingPlays.length);
+  for (const job of jobs) playUiSound(job.kind, { ...job.options, force: true });
+}
+
+function queueForUnlock(kind: UiSound, options: PlayOptions): void {
+  if (pendingPlays.length >= 3) pendingPlays.shift();
+  pendingPlays.push({ kind, options });
 }
 
 /** Lets the global manager suppress a generic blip when an explicit cue just fired. */
@@ -216,7 +241,17 @@ export function playUiSound(kind: UiSound, options: PlayOptions = {}): void {
   };
 
   if (audio.state === 'running') play();
-  else void audio.resume().then(play).catch(() => undefined);
+  else {
+    // Outside a user gesture (e.g. after an awaited fetch on mobile) the
+    // resume is ignored — queue the cue for the next real interaction.
+    void audio
+      .resume()
+      .then(() => {
+        if (audio.state === 'running') play();
+        else queueForUnlock(kind, options);
+      })
+      .catch(() => queueForUnlock(kind, options));
+  }
 }
 
 /** Convenience wrappers used by the global listeners. */

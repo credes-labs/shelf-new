@@ -20,6 +20,7 @@ export function ShelfLogo({ className, animate = true }: Props) {
   const maskId = `shelf-cut-${uid}`;
   // Indexes 0-2: the three panels. 3-5: copies that trail one loop behind.
   const panels = useRef<(SVGPathElement | null)[]>([]);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     if (!animate) return;
@@ -32,9 +33,19 @@ export function ShelfLogo({ className, animate = true }: Props) {
     let pending = 0;
     let lastTouchY: number | null = null;
     let raf = 0;
+    let running = false;
+    let visible = true;
 
     const place = (el: SVGPathElement | null, s: number) => {
       el?.setAttribute("transform", `translate(${(UX * s).toFixed(3)} ${(UY * s).toFixed(3)})`);
+    };
+    // The loop only runs while the logo is catching up — once settled it
+    // sleeps until the next input. Identical motion, near-zero idle CPU.
+    const kick = () => {
+      if (!running && visible) {
+        running = true;
+        raf = requestAnimationFrame(tick);
+      }
     };
     const tick = () => {
       // Absolute resync: scroll deltas telescope, so folding the live scroll
@@ -57,14 +68,21 @@ export function ShelfLogo({ className, animate = true }: Props) {
         place(panels.current[k], f * LOOP);
         place(panels.current[k + WINDOWS.length], (f - 1) * LOOP);
       }
+      if (shown === target) {
+        running = false;
+        raf = 0;
+        return;
+      }
       raf = requestAnimationFrame(tick);
     };
     const onScroll = () => {
       progress += window.scrollY - lastY;
       lastY = window.scrollY;
+      kick();
     };
     const onWheel = (event: WheelEvent) => {
       pending += event.deltaY;
+      kick();
     };
     const onTouchStart = (event: TouchEvent) => {
       lastTouchY = event.touches[0]?.clientY ?? null;
@@ -74,12 +92,14 @@ export function ShelfLogo({ className, animate = true }: Props) {
       if (currentY === undefined) return;
       if (lastTouchY !== null) pending += lastTouchY - currentY;
       lastTouchY = currentY;
+      kick();
     };
     const resync = () => {
       // Resize/pageshow can jump the scroll position without scroll events firing.
       lastY = window.scrollY;
       tickY = window.scrollY;
       pending = 0;
+      kick();
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -88,9 +108,24 @@ export function ShelfLogo({ className, animate = true }: Props) {
     window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("resize", resync);
     window.addEventListener("pageshow", resync);
-    raf = requestAnimationFrame(tick);
+    // Pause entirely while the logo is offscreen.
+    const svg = svgRef.current;
+    const observer = svg && 'IntersectionObserver' in window
+      ? new IntersectionObserver(([entry]) => {
+          visible = entry.isIntersecting;
+          if (visible) kick();
+          else if (running) {
+            running = false;
+            cancelAnimationFrame(raf);
+            raf = 0;
+          }
+        })
+      : null;
+    if (svg && observer) observer.observe(svg);
+    kick();
     return () => {
       cancelAnimationFrame(raf);
+      observer?.disconnect();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
@@ -102,6 +137,7 @@ export function ShelfLogo({ className, animate = true }: Props) {
 
   return (
     <svg
+      ref={svgRef}
       className={className}
       viewBox="0 0 124 41"
       fill="none"

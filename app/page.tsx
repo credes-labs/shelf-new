@@ -1,12 +1,16 @@
 'use client';
 
 import { Fragment, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import BrickFooter from '../components/BrickFooter';
+import dynamic from 'next/dynamic';
 import SiteHeader from '../components/SiteHeader';
 import WaitlistSignup from '../components/WaitlistSignup';
 import HeadlineStyleToken from '../components/HeadlineStyleToken';
 import { playScrollTick, playUiSound } from '../lib/ui-sound';
 import DataTypeIcons from '../components/DataTypeIcons';
+
+// Below-the-fold game: split into its own chunk, still server-rendered,
+// so first paint downloads less JavaScript with identical HTML.
+const BrickFooter = dynamic(() => import('../components/BrickFooter'));
 
 type HeroSticker = { file: string; name: string };
 type StickerScene = { behind: HeroSticker[]; front: HeroSticker[] };
