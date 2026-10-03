@@ -1,115 +1,252 @@
 'use client';
 
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { createBricks, moveBrick, type Brick } from '../lib/bricks';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import type { CSSProperties, TransitionEvent } from 'react';
+import Image from 'next/image';
 import styles from './BrickFooter.module.css';
+import {
+  CLEAR_MS,
+  STAGGER_MS,
+  annotate,
+  clearOrder,
+  findClears,
+  generate,
+  layoutFor,
+  moveMs,
+  settle,
+  type Brick,
+  type Drop,
+  type Motion,
+} from '../lib/bricks';
+import { useBrickDrag } from '../lib/useBrickDrag';
 
-type SocialName = 'instagram' | 'threads' | 'pinterest' | 'x' | 'linkedin' | 'facebook';
+const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-function SocialGlyph({ name }: { name: SocialName }) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {name === 'instagram' && <><rect x="3.3" y="3.3" width="17.4" height="17.4" rx="5" /><circle cx="12" cy="12" r="4.1" /><circle cx="17.7" cy="6.6" r=".8" fill="currentColor" stroke="none" /></>}
-    {name === 'threads' && <path d="M18.8 10.2c-.6-4.3-3-6.6-6.9-6.6-4.5 0-7.2 3.2-7.2 8.4 0 5.4 2.6 8.5 7.1 8.5 3.6 0 6.2-1.8 6.2-4.7 0-2.4-1.6-3.8-4.4-3.8-2.4 0-3.8 1-3.8 2.6 0 1.3 1 2.2 2.4 2.2 1.9 0 3.1-1.5 3.1-3.9 0-3.3-1.6-5.1-4.5-5.1-1.5 0-2.8.6-3.8 1.7" />}
-    {name === 'pinterest' && <path d="M12 21a9 9 0 1 0-3.8-.8l1.4-5.8s.8 1.5 3 1.5c3.1 0 5.3-2.8 5.3-6.5 0-3.2-2.7-5.5-6.3-5.5-4.4 0-6.7 3.1-6.7 6.2 0 1.5.6 3 1.8 3.5.2.1.4 0 .5-.2l.3-1.2c.1-.2 0-.4-.1-.6-.4-.5-.7-1.2-.7-2.2 0-2.8 2.1-5.3 5.6-5.3 3 0 4.7 1.8 4.7 4.3 0 3.2-1.4 5.9-3.6 5.9-1.2 0-2.1-1-1.8-2.2.3-1.5 1-3.1 1-4.2 0-1-.5-1.8-1.6-1.8-1.3 0-2.3 1.3-2.3 3 0 1.1.4 1.9.4 1.9l-1.5 6.3" />}
-    {name === 'x' && <><path d="M4 4l16 16" /><path d="M20 4 4 20" /></>}
-    {name === 'linkedin' && <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M7.5 10v7M7.5 7.2v.1M11 17v-7h3.3v1.1c.5-.8 1.3-1.3 2.4-1.3 2 0 2.8 1.3 2.8 3.5V17M11 13.1c0-1.7 1-3.3 3.1-3.3" /></>}
-    {name === 'facebook' && <><circle cx="12" cy="12" r="9" /><path d="M13.2 20.8v-7.4h2.5l.4-2.8h-2.9V8.8c0-.8.2-1.4 1.4-1.4h1.6V4.9c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1v1.7H7.2v2.8h2.6v7.4" /></>}
-  </svg>;
+/* ---------- state: a tiny phase machine (idle -> moving -> clearing -> moving -> ...) ---------- */
+
+type Phase = 'idle' | 'moving' | 'clearing';
+type State = {
+  bricks: Brick[];
+  cols: number;
+  rows: number;
+  phase: Phase;
+  wait: number; // ms until the phase's follow-up step
+  stamp: number; // bumps on every phase entry so the timer effect re-arms
+  dying: number[];
+  epoch: number; // bumps whenever a new wall is generated
+};
+type Action =
+  | { type: 'layout'; cols: number; rows: number }
+  | { type: 'reset' }
+  | { type: 'release'; id: number; drop: Drop | null; travel: number; motion: Motion }
+  | { type: 'check' }
+  | { type: 'settle' };
+
+const empty: State = { bricks: [], cols: 0, rows: 0, phase: 'idle', wait: 0, stamp: 0, dying: [], epoch: 0 };
+
+const fresh = (s: State, cols: number, rows: number): State => ({
+  ...s, bricks: generate(cols, rows), cols, rows, phase: 'idle', wait: 0, dying: [], stamp: s.stamp + 1, epoch: s.epoch + 1,
+});
+
+const commit = (s: State, bricks: Brick[]): State => ({
+  ...s,
+  bricks,
+  dying: [],
+  phase: 'moving',
+  wait: Math.max(120, ...bricks.map((b) => moveMs(b.travel))) + 60,
+  stamp: s.stamp + 1,
+});
+
+function reducer(s: State, a: Action): State {
+  switch (a.type) {
+    case 'layout':
+      return a.cols === s.cols && a.rows === s.rows ? s : fresh(s, a.cols, a.rows);
+    case 'reset':
+      return fresh(s, s.cols, s.rows);
+    case 'release': {
+      const tag = (b: Brick) => (b.id === a.id ? { ...b, travel: a.travel, motion: a.motion } : b);
+      if (!a.drop) return { ...s, bricks: s.bricks.map(tag) }; // spring back, nothing else changes
+      return commit(s, annotate(s.bricks, a.drop.bricks).map(tag));
+    }
+    case 'check': {
+      const dead = findClears(s.bricks, s.cols);
+      if (!dead.size) return { ...s, phase: 'idle' };
+      const last = Math.max(...Array.from(clearOrder(s.bricks, Array.from(dead)).values()));
+      return { ...s, dying: Array.from(dead), phase: 'clearing', wait: CLEAR_MS + last * STAGGER_MS + 40, stamp: s.stamp + 1 };
+    }
+    case 'settle': {
+      const dead = new Set(s.dying);
+      const rest = s.bricks.filter((b) => !dead.has(b.id));
+      return commit(s, annotate(rest, settle(rest, s.cols)));
+    }
+  }
 }
 
-type State = { bricks: Brick[]; removed: Brick[]; cols: number; width: number };
-type Action = { type: 'resize'; cols: number; width: number } | { type: 'move'; id: number; x: number; row?: number } | { type: 'reset' } | { type: 'clear-animation' };
-function reducer(state: State, action: Action): State {
-  if (action.type === 'resize') return action.cols === state.cols ? { ...state, width: action.width } : { bricks: createBricks(action.cols), removed: [], cols: action.cols, width: action.width };
-  if (action.type === 'reset') return { ...state, bricks: createBricks(state.cols, Date.now() % 100000), removed: [] };
-  if (action.type === 'clear-animation') return { ...state, removed: [] };
-  const bricks = moveBrick(state.bricks, action.id, action.x, state.cols, action.row);
-  const alive = new Set(bricks.map(brick => brick.id));
-  const removed = state.bricks.filter(brick => !alive.has(brick.id));
-  return { ...state, bricks, removed };
+/* ---------- landing squash (imperative: no React state, no re-render) ---------- */
+
+function thud(el: HTMLElement) {
+  const fell = el.dataset.motion === 'fall' || el.dataset.intro;
+  if (!fell || typeof el.animate !== 'function') return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const now = performance.now();
+  if (now - Number(el.dataset.thud || 0) < 80) return;
+  el.dataset.thud = String(now);
+
+  const w = Number(el.dataset.w) || 1;
+  const travel = Number(el.dataset.travel) || 6;
+  // farther fall + wider brick = harder landing
+  const a = Math.min(0.1, 0.02 + Math.sqrt(travel) * 0.014) * (0.8 + w * 0.08);
+  const base = { transformOrigin: '50% 100%' }; // squash against the floor, not the middle
+  el.animate(
+    [
+      { ...base, scale: '1 1' },
+      { ...base, scale: `${1 + a * 0.6} ${1 - a}`, offset: 0.28 },
+      { ...base, scale: `${1 - a * 0.2} ${1 + a * 0.3}`, offset: 0.6 },
+      { ...base, scale: '1 1' },
+    ],
+    { duration: 300 + w * 25, easing: 'cubic-bezier(.2,.7,.3,1)' },
+  );
 }
+
+/* ---------- component ---------- */
+
+type Intro = 'pre' | 'in' | 'done';
 
 export default function BrickFooter() {
-  const [state, dispatch] = useReducer(reducer, { bricks: createBricks(20), removed: [], cols: 20, width: 0 });
-  const [cell, setCell] = useState(52);
+  const [state, dispatch] = useReducer(reducer, empty);
+  const [intro, setIntro] = useState<Intro>('pre');
+  const [preview, setPreview] = useState<{ heldId: number; drop: Drop } | null>(null);
+
+  const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ id: number; pointerId: number; startX: number; startY: number; originX: number; originRow: number; width: number; element: HTMLElement } | null>(null);
+  const seen = useRef(false);
+  const introTimer = useRef(0);
+
+  // measure -> (re)build the wall only when the column/row count actually changes
   useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const width = entry.contentRect.width;
-      const targetUnit = Math.max(44, Math.min(66, width * .035));
-      const mobile = window.matchMedia('(max-width: 700px)').matches;
-      const cols = mobile ? Math.max(1, Math.floor(width / targetUnit)) : Math.ceil(width / targetUnit) + 2;
-      const unit = mobile ? width / cols : targetUnit;
-      setCell(unit);
-      dispatch({ type: 'resize', cols, width });
-    });
-    observer.observe(stage);
-    return () => observer.disconnect();
+    const el = sectionRef.current;
+    if (!el) return;
+    const measure = () => dispatch({ type: 'layout', ...layoutFor(el.clientWidth) });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
+
+  // step the phase machine
   useEffect(() => {
-    if (!state.removed.length) return;
-    const timer = window.setTimeout(() => dispatch({ type: 'clear-animation' }), 720);
-    return () => window.clearTimeout(timer);
-  }, [state.removed]);
+    if (state.phase === 'idle') return;
+    const t = window.setTimeout(
+      () => dispatch({ type: state.phase === 'moving' ? 'check' : 'settle' }),
+      state.wait,
+    );
+    return () => window.clearTimeout(t);
+  }, [state.phase, state.stamp, state.wait]);
 
-  const pointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const current = drag.current;
-    if (!current || event.pointerId !== current.pointerId) return;
-    let dx = event.clientX - current.startX;
-    let dy = event.clientY - current.startY;
-    if (window.matchMedia('(max-width: 700px)').matches) {
-      dx = Math.max(-current.originX * cell, Math.min((state.cols - current.originX - current.width) * cell, dx));
-      dy = Math.max(-(8 - current.originRow) * cell, Math.min(current.originRow * cell, dy));
-    }
-    current.element.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
-  }, [cell, state.cols]);
-  const startDrag = (event: React.PointerEvent<HTMLDivElement>, brick: Brick) => {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    const stage = stageRef.current;
-    if (!stage) return;
-    stage.setPointerCapture(event.pointerId);
-    const element = event.currentTarget;
-    element.dataset.held = 'true';
-    drag.current = { id: brick.id, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, originX: brick.x, originRow: brick.row, width: brick.width, element };
-  };
-  const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    const current = drag.current;
-    if (!current || event.pointerId !== current.pointerId) return;
-    let dx = event.clientX - current.startX;
-    let dy = event.clientY - current.startY;
-    if (window.matchMedia('(max-width: 700px)').matches) {
-      dx = Math.max(-current.originX * cell, Math.min((state.cols - current.originX - current.width) * cell, dx));
-      dy = Math.max(-(8 - current.originRow) * cell, Math.min(current.originRow * cell, dy));
-    }
-    const x = Math.max(0, Math.min(state.cols - current.width, current.originX + Math.round(dx / cell)));
-    const row = Math.max(0, Math.min(8, current.originRow - Math.round(dy / cell)));
-    // Keep the brick under the pointer through the layout commit, then let its
-    // transform ease into the committed cell position.
-    current.element.style.transform = `translate3d(${dx + (current.originX - x) * cell}px, ${(current.originRow - row) * cell - dy}px, 0)`;
-    delete current.element.dataset.held;
-    drag.current = null;
-    dispatch({ type: 'move', id: current.id, x, row });
-    requestAnimationFrame(() => { current.element.style.transform = ''; });
+  // intro: bricks rain in the first time the footer scrolls into view (and after a reset)
+  const play = useCallback(() => {
+    window.clearTimeout(introTimer.current);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return setIntro('done');
+    setIntro('pre');
+    requestAnimationFrame(() => requestAnimationFrame(() => setIntro('in')));
+    introTimer.current = window.setTimeout(() => setIntro('done'), 1900);
+  }, []);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      seen.current = true;
+      play();
+      io.disconnect();
+    }, { threshold: 0.35 });
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(introTimer.current);
+    };
+  }, [play]);
+
+  // layout effect so a regenerated wall never paints once without its intro state
+  useIsoLayoutEffect(() => {
+    if (seen.current) play();
+  }, [state.epoch, play]);
+
+  const drag = useBrickDrag({
+    stageRef,
+    bricks: state.bricks,
+    cols: state.cols,
+    rows: state.rows,
+    enabled: state.phase === 'idle' && intro === 'done',
+    resetKey: state.epoch,
+    onPreview: (drop, heldId) => setPreview(drop ? { heldId, drop } : null),
+    onRelease: (id, drop, travel, motion) => {
+      setPreview(null);
+      dispatch({ type: 'release', id, drop, travel, motion });
+    },
+  });
+
+  const dying = useMemo(() => new Set(state.dying), [state.dying]);
+  const order = useMemo(() => clearOrder(state.bricks, state.dying), [state.bricks, state.dying]);
+  const heldColor = preview && state.bricks.find((b) => b.id === preview.heldId)?.color;
+  const rows = state.rows || 8;
+
+  const onTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && e.propertyName === 'translate') thud(e.currentTarget);
   };
 
-  return <footer className={styles.footer}>
-    <div className={styles.footerContent}>
-      <nav className={styles.socials} aria-label="Social links">
-        {(['instagram', 'threads', 'pinterest', 'x', 'linkedin', 'facebook'] as const).map(name => <a key={name} href={`#${name}`} aria-label={name === 'x' ? 'X' : name[0].toUpperCase() + name.slice(1)}><SocialGlyph name={name} /></a>)}
-      </nav>
-      <p className={styles.copyright}>© Credes Techlabs 2026</p>
-      <div className={styles.links}><div><span>Company</span><a href="#about">About us</a><a href="#contact">Contact</a><a href="#security">Security</a><a href="#privacy">Privacy Policy</a><a href="#terms">Terms and Conditions</a></div><div><span>Download</span><a href="#ios">iOS</a><a href="#web">Web</a><a href="#macos">Mac OS</a></div></div>
-    </div>
-    <div className={styles.gameHint}><span>Drag · same-color rows drop</span><button type="button" onClick={() => dispatch({ type: 'reset' })}>Reset</button></div>
-    <img className={styles.halfCut} src="/svg/shelf%20footer%20halfcut%20text.svg" alt="" aria-hidden="true" />
-    <div ref={stageRef} className={styles.stage} style={{ '--cell': `${cell}px`, '--cols': state.cols, '--wall-height': `${cell * 9}px` } as React.CSSProperties} onPointerMove={pointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label="Interactive brick sorting game">
-      <div className={styles.wall} style={{ width: `${state.cols * cell}px`, height: `${cell * 9}px`, left: `calc(50% - ${state.cols * cell / 2}px)` }} aria-hidden="true">
-        {[...state.bricks.map(brick => ({ brick, clearing: false })), ...state.removed.map(brick => ({ brick, clearing: true }))].map(({ brick, clearing }) => <div key={brick.id} className={`${styles.brick}${clearing ? ` ${styles.clearing}` : ''}`} data-color={brick.color} data-brick-id={brick.id} onPointerDown={event => !clearing && startDrag(event, brick)} style={{ left: `${brick.x * cell}px`, bottom: `${brick.row * cell}px`, width: `${brick.width * cell}px`, height: `${cell}px`, '--clear-x': brick.x } as React.CSSProperties}><span className={styles.studs}>{Array.from({ length: brick.width }, (_, i) => <i key={i} />)}</span></div>)}
+  const slot = (x: number, row: number, w: number) =>
+    ({ '--x': x, '--y': rows - 1 - row, '--w': w }) as CSSProperties;
+
+  return (
+    <section
+      ref={sectionRef}
+      className={styles.section}
+      aria-label="Brick puzzle"
+      style={{ '--cols': state.cols || 28, '--rows': rows, '--clear-ms': `${CLEAR_MS}ms`, '--stagger': `${STAGGER_MS}ms` } as CSSProperties}
+    >
+      <Image className="brick-footer-art" src="/svg/shelf-footer.svg" alt="" aria-hidden="true" width={932} height={146} unoptimized />
+
+      <div className={styles.hint}>
+        <span>Drag | Match a full row</span>
+        <button type="button" onClick={() => dispatch({ type: 'reset' })}>Reset</button>
       </div>
-    </div>
-  </footer>;
+
+      <div ref={stageRef} className={styles.stage} aria-hidden="true" {...drag}>
+        {preview && heldColor && preview.drop.kind === 'place' && (
+          <div className={`${styles.ghost} ${styles.tone}`} data-color={heldColor} style={slot(preview.drop.x, preview.drop.row, state.bricks.find((b) => b.id === preview.heldId)!.w)} />
+        )}
+
+        {state.bricks.map((b) => (
+          <div
+            key={`${state.epoch}-${b.id}`}
+            className={[
+              styles.brick,
+              styles.tone,
+              dying.has(b.id) && styles.dying,
+              preview?.drop.swapId === b.id && styles.swapTarget,
+            ].filter(Boolean).join(' ')}
+            data-brick-id={b.id}
+            data-color={b.color}
+            data-w={b.w}
+            data-travel={b.travel}
+            data-motion={b.motion}
+            data-intro={intro === 'done' ? undefined : intro}
+            style={{
+              ...slot(b.x, b.row, b.w),
+              '--ms': `${moveMs(b.travel)}ms`,
+              '--d': intro === 'in' ? `${b.row * 90 + (b.x % 7) * 16}ms` : '0ms',
+              '--i': order.get(b.id) ?? 0,
+            } as CSSProperties}
+            onTransitionEnd={onTransitionEnd}
+          >
+            {Array.from({ length: b.w }, (_, i) => (
+              <span className={styles.cell} key={i}><i className={styles.stud} /></span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

@@ -1,13 +1,12 @@
 'use client';
 
-import { FormEvent, Fragment, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import {
-  ArrowRight,
-  Check,
-} from 'lucide-react';
+import { Fragment, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import BrickFooter from '../components/BrickFooter';
+import SiteHeader from '../components/SiteHeader';
+import WaitlistSignup from '../components/WaitlistSignup';
 import HeadlineStyleToken from '../components/HeadlineStyleToken';
-import { ShelfLogo } from '../components/shelf-logo/ShelfLogo';
+import { playScrollTick, playUiSound } from '../lib/ui-sound';
+import DataTypeIcons from '../components/DataTypeIcons';
 
 type HeroSticker = { file: string; name: string };
 type StickerScene = { behind: HeroSticker[]; front: HeroSticker[] };
@@ -29,7 +28,10 @@ function PhoneScreens({ progress, screenImages, mobile = false }: { progress: nu
               ? 1
               : 0;
         const distance = Math.min(1, Math.abs(index - progress));
-        const blur = Math.sin(distance * Math.PI) * 1.2;
+        // Preserve the original scroll-linked screen glide and blur. The two
+        // screens overlap during the handoff, then settle sharply at each stop.
+        const blur = Math.sin(distance * Math.PI) * 7;
+        const y = (index - progress) * 11;
         const brightness = 1 - Math.sin(distance * Math.PI) * 0.025;
         return <img
           key={src}
@@ -39,7 +41,12 @@ function PhoneScreens({ progress, screenImages, mobile = false }: { progress: nu
           aria-hidden="true"
           data-active={index === Math.round(progress)}
           draggable="false"
-          style={{ opacity, filter: `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(3)})`, zIndex: index + 1 }}
+          style={{
+            opacity,
+            filter: `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(3)})`,
+            transform: `translate3d(0, ${y.toFixed(2)}px, 0)`,
+            zIndex: index + 1,
+          }}
         />;
       })}
     </div>
@@ -78,6 +85,7 @@ const stickerChats: Record<string, [string, string]> = {
 
 function InteractiveSticker({ sticker }: { sticker: HeroSticker }) {
   const [open, setOpen] = useState(false);
+  const touchTap = useRef(false);
   const [first, second] = stickerChats[sticker.name] ?? ['saved to your shelf', 'You can find it here later.'];
 
   return (
@@ -87,11 +95,32 @@ function InteractiveSticker({ sticker }: { sticker: HeroSticker }) {
       aria-label={`${sticker.name.replace(/-/g, ' ')} sticker. ${first}. ${second}`}
       aria-expanded={open}
       data-open={open}
-      onPointerEnter={event => { if (event.pointerType !== 'touch') setOpen(true); }}
-      onPointerLeave={event => { if (event.pointerType !== 'touch') setOpen(false); }}
+      onPointerEnter={event => {
+        if (event.pointerType === 'touch') return;
+        setOpen(true);
+        playUiSound('sticker');
+      }}
+      onPointerLeave={event => {
+        if (event.pointerType !== 'touch') setOpen(false);
+      }}
+      onPointerDown={event => {
+        if (event.pointerType !== 'touch') return;
+        touchTap.current = true;
+        setOpen(value => !value);
+        playUiSound('stickerTap');
+      }}
       onFocus={() => setOpen(true)}
       onBlur={() => setOpen(false)}
-      onClick={() => setOpen(true)}
+      onClick={event => {
+        if (touchTap.current) {
+          touchTap.current = false;
+          return;
+        }
+        if (event.detail === 0) setOpen(value => !value);
+        else setOpen(true);
+        playUiSound('stickerTap');
+      }}
+      onPointerMove={moveStickerParallax}
     >
       <img className="sticker-art" src={`/svg/${encodeURIComponent(sticker.file)}`} alt="" draggable="false" />
       <span className="sticker-chat" aria-hidden={!open}>
@@ -104,20 +133,24 @@ function InteractiveSticker({ sticker }: { sticker: HeroSticker }) {
 
 function moveStickerParallax(event: ReactPointerEvent<HTMLElement>) {
   if (event.pointerType === 'touch') return;
-  const bounds = event.currentTarget.getBoundingClientRect();
+  const art = event.currentTarget.closest<HTMLElement>('.hero-art, .mobile-story-art');
+  if (!art) return;
+  const bounds = art.getBoundingClientRect();
   const x = event.clientX - bounds.left - bounds.width / 2;
   const y = event.clientY - bounds.top - bounds.height / 2;
-  event.currentTarget.style.setProperty('--cursor-x-front', `${x * 0.04}px`);
-  event.currentTarget.style.setProperty('--cursor-y-front', `${y * 0.04}px`);
-  event.currentTarget.style.setProperty('--cursor-x-behind', `${x * 0.022}px`);
-  event.currentTarget.style.setProperty('--cursor-y-behind', `${y * 0.022}px`);
+  art.style.setProperty('--cursor-x-front', `${x * 0.055}px`);
+  art.style.setProperty('--cursor-y-front', `${y * 0.055}px`);
+  art.style.setProperty('--cursor-x-behind', `${x * 0.03}px`);
+  art.style.setProperty('--cursor-y-behind', `${y * 0.03}px`);
 }
 
 function resetStickerParallax(event: ReactPointerEvent<HTMLElement>) {
-  event.currentTarget.style.setProperty('--cursor-x-front', '0px');
-  event.currentTarget.style.setProperty('--cursor-y-front', '0px');
-  event.currentTarget.style.setProperty('--cursor-x-behind', '0px');
-  event.currentTarget.style.setProperty('--cursor-y-behind', '0px');
+  const art = event.currentTarget.closest<HTMLElement>('.hero-art, .mobile-story-art');
+  if (!art) return;
+  art.style.setProperty('--cursor-x-front', '0px');
+  art.style.setProperty('--cursor-y-front', '0px');
+  art.style.setProperty('--cursor-x-behind', '0px');
+  art.style.setProperty('--cursor-y-behind', '0px');
 }
 
 const stickerScenes: StickerScene[] = [
@@ -149,39 +182,12 @@ const stickerScenes: StickerScene[] = [
 ];
 
 export default function Home() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [scrollProgress, setScrollProgress] = useState(0);
   const heroRef = useRef<HTMLElement>(null);
-  const audioRef = useRef<AudioContext | null>(null);
   const soundStep = useRef(0);
+  const lastSoundAt = useRef(0);
 
   useEffect(() => {
-    const unlockAudio = () => {
-      try {
-        audioRef.current ??= new window.AudioContext();
-        if (audioRef.current.state === 'suspended') void audioRef.current.resume();
-      } catch { /* Audio is an enhancement; scrolling still works without it. */ }
-    };
-    const playDialClick = () => {
-      const context = audioRef.current;
-      if (!context || context.state !== 'running') return;
-      const start = context.currentTime;
-      [0, 0.042].forEach((delay, index) => {
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(index === 0 ? 1750 : 1180, start + delay);
-        oscillator.frequency.exponentialRampToValueAtTime(index === 0 ? 920 : 720, start + delay + 0.026);
-        gain.gain.setValueAtTime(0.0001, start + delay);
-        gain.gain.exponentialRampToValueAtTime(0.025, start + delay + 0.003);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + delay + 0.032);
-        oscillator.connect(gain);
-        gain.connect(context.destination);
-        oscillator.start(start + delay);
-        oscillator.stop(start + delay + 0.035);
-      });
-    };
     let frame = 0;
     const update = () => {
       if (frame) return;
@@ -193,32 +199,47 @@ export default function Home() {
           soundStep.current = 0;
           return;
         }
+        // Desktop uses the pinned scene's travel distance. Mobile story panels
+        // are each one small viewport tall, so measure a panel directly instead
+        // of relying on the browser's changing visual viewport height.
         const rect = section.getBoundingClientRect();
+        const isMobileStory = window.matchMedia('(max-width: 900px)').matches;
+        const firstStoryStep = isMobileStory ? section.querySelector<HTMLElement>('.mobile-story-step') : null;
         const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-        const distance = Math.max(1, rect.height - viewportHeight);
-        const next = Math.max(0, Math.min(2, (-rect.top / distance) * 2));
+        const distance = isMobileStory && firstStoryStep
+          ? firstStoryStep.getBoundingClientRect().height
+          : Math.max(1, rect.height - viewportHeight);
+        const next = Math.max(0, Math.min(2, (-rect.top / distance) * (isMobileStory ? 1 : 2)));
         setScrollProgress(value => Math.abs(value - next) > 0.004 ? next : value);
         const nextStep = Math.floor(next * 8 + 0.001);
         if (nextStep !== soundStep.current) {
+          const stepsMoved = Math.abs(nextStep - soundStep.current);
           soundStep.current = nextStep;
-          playDialClick();
+          // Hero dial ratchet: harder flicks pitch up. Throttled in the engine.
+          const now = performance.now();
+          if (now - lastSoundAt.current > 50) {
+            lastSoundAt.current = now;
+            playScrollTick(0.35 + Math.min(0.6, stepsMoved * 0.2));
+          }
         }
       });
     };
-    window.addEventListener('wheel', unlockAudio, { passive: true });
-    window.addEventListener('pointerdown', unlockAudio, { passive: true });
-    window.addEventListener('keydown', unlockAudio);
     window.addEventListener('scroll', update, { passive: true });
+    document.addEventListener('scroll', update, { passive: true, capture: true });
     window.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('resize', update);
+    const resizeObserver = heroRef.current ? new ResizeObserver(update) : null;
+    if (heroRef.current) resizeObserver?.observe(heroRef.current);
+    window.addEventListener('pageshow', update);
     update();
     return () => {
-      window.removeEventListener('wheel', unlockAudio);
-      window.removeEventListener('pointerdown', unlockAudio);
-      window.removeEventListener('keydown', unlockAudio);
       window.removeEventListener('scroll', update);
+      document.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('resize', update);
+      window.removeEventListener('pageshow', update);
+      resizeObserver?.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
-      if (audioRef.current) void audioRef.current.close();
     };
   }, []);
 
@@ -237,7 +258,11 @@ export default function Home() {
   const scrollToDot = (index: number) => {
     if (!heroRef.current) return;
     const section = heroRef.current;
-    const range = section.offsetHeight - (window.visualViewport?.height ?? window.innerHeight);
+    const isMobileStory = window.matchMedia('(max-width: 900px)').matches;
+    const firstStoryStep = isMobileStory ? section.querySelector<HTMLElement>('.mobile-story-step') : null;
+    const range = firstStoryStep
+      ? firstStoryStep.getBoundingClientRect().height * 2
+      : section.offsetHeight - (window.visualViewport?.height ?? window.innerHeight);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const top = section.getBoundingClientRect().top + window.scrollY;
     window.scrollTo({ top: top + range * (index / 3), behavior: reducedMotion ? 'auto' : 'smooth' });
@@ -245,39 +270,16 @@ export default function Home() {
   const stickerLayerStyle = (index: number): React.CSSProperties => {
     return { opacity: 1, transform: `translate3d(0, ${(index - scrollProgress) * 100}vh, 0)` };
   };
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus('loading');
-
-    try {
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error('Unable to join');
-      setEmail('');
-      setStatus('success');
-    } catch {
-      setStatus('error');
-    }
-  }
+  const renderDots = (className: string) => <nav className={`hero-dots ${className}`} aria-label="Hero sections">
+    {[0, 1, 2, 3].map(index => <button key={index} type="button" aria-label={`Go to hero section ${index + 1}`} aria-current={activeDot === index ? 'step' : undefined} className={activeDot === index ? 'active' : ''} style={{ '--dot-color': dotColors[activeDot] } as React.CSSProperties} onClick={() => { playUiSound('navigation'); scrollToDot(index); }} />)}
+  </nav>;
 
   return (
     <main className="site-shell">
       <section ref={heroRef} className="hero" id="top" aria-label="Shelf app introduction">
         <div className="hero-stage">
         <div className="hero-blue">
-          <header className="nav-wrap">
-            <a className="brand" href="#top" aria-label="Shelf home">
-              <ShelfLogo className="shelf-logo" />
-            </a>
-            <div className="hero-dots" aria-label="Hero sections">
-              {[0, 1, 2, 3].map((index) => <button key={index} type="button" aria-label={`Go to hero section ${index + 1}`} aria-pressed={activeDot === index} className={activeDot === index ? 'active' : ''} style={{ '--dot-color': dotColors[activeDot] } as React.CSSProperties} onClick={() => scrollToDot(index)} />)}
-            </div>
-          </header>
+          <SiteHeader />
 
           <div className="hero-grid">
             <div className="hero-art" aria-label="Shelf app preview" onPointerMove={moveStickerParallax} onPointerLeave={resetStickerParallax}>
@@ -295,27 +297,22 @@ export default function Home() {
             </div>
 
             <div className="hero-copy">
+              <DataTypeIcons />
               <div className="hero-copy-slides">
                 <h1 id="hero-title" className="hero-copy-slide" aria-hidden={activeHeadline !== 0} style={{ opacity: weights[0], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress))) * 7}px)`, transform: `translate3d(0, ${-scrollProgress * 10}px, 0)`, pointerEvents: weights[0] > 0.8 ? 'auto' : 'none' }}>Keep your<br />context.<br />Find it when it<br /><HeadlineStyleToken /></h1>
                 <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 1} style={{ opacity: weights[1], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 1))) * 7}px)`, transform: `translate3d(0, ${(1 - scrollProgress) * 10}px, 0)` }}>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>
                 <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 2} style={{ opacity: weights[2], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 2))) * 7}px)`, transform: `translate3d(0, ${(2 - scrollProgress) * 10}px, 0)` }}>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>
               </div>
-              <div className="waitlist-inline">
-                {status === 'success' ? <div className="success-inline"><span><Check size={16} /></span><strong>You’re on the list.</strong></div> : <form onSubmit={handleSubmit}><div className="email-row"><input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Your email address" required /><button type="submit" disabled={status === 'loading'} aria-label="Join the waitlist">{status === 'loading' ? '...' : <ArrowRight size={18} />}</button></div>{status === 'error' && <p className="form-error">Please try again.</p>}</form>}
-              </div>
+              <WaitlistSignup id="home-waitlist-desktop" className="waitlist-inline" />
             </div>
           </div>
+          {renderDots('hero-dots-desktop')}
         </div>
 
         <div className="hero-reference" role="img" aria-label="Archival blueprint collage" />
         </div>
         <div className="mobile-story">
-          <header className="mobile-story-nav nav-wrap">
-            <a className="brand" href="#top" aria-label="Shelf home"><ShelfLogo className="shelf-logo" /></a>
-            <div className="hero-dots" aria-label="Hero sections">
-              {[0, 1, 2, 3].map(index => <button key={index} type="button" aria-label={`Go to hero section ${index + 1}`} aria-pressed={activeDot === index} className={activeDot === index ? 'active' : ''} style={{ '--dot-color': dotColors[activeDot] } as React.CSSProperties} onClick={() => scrollToDot(index)} />)}
-            </div>
-          </header>
+          <SiteHeader className="mobile-story-nav" />
           {stickerScenes.map((scene, index) => <section className="mobile-story-step" key={index} aria-label={`Shelf story ${index + 1}`}>
             <div className="mobile-story-art" onPointerMove={moveStickerParallax} onPointerLeave={resetStickerParallax}>
               <div className="sticker-set sticker-set-behind">
@@ -330,11 +327,10 @@ export default function Home() {
             </div>
             <div className="mobile-story-copy">
               {index === 0 && <h1>Keep your<br />context.<br />Find it when it<br /><HeadlineStyleToken /></h1>}
+              {index === 0 && <DataTypeIcons className="dt-row-mobile" />}
               {index === 1 && <h1>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>}
               {index === 2 && <h1>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>}
-              {index === 2 && <div className="waitlist-inline mobile-waitlist">
-                {status === 'success' ? <div className="success-inline"><span><Check size={16} /></span><strong>You’re on the list.</strong></div> : <form onSubmit={handleSubmit}><div className="email-row"><input id="email-mobile" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="Your email address" required /><button type="submit" disabled={status === 'loading'} aria-label="Join the waitlist">{status === 'loading' ? '...' : <ArrowRight size={18} />}</button></div>{status === 'error' && <p className="form-error">Please try again.</p>}</form>}
-              </div>}
+              {index === 2 && <WaitlistSignup id="home-waitlist-mobile" className="waitlist-inline mobile-waitlist" />}
             </div>
           </section>)}
         </div>

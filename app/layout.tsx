@@ -1,12 +1,17 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Space_Grotesk } from 'next/font/google';
+import UiSoundManager from '../components/UiSoundManager';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Shelf — Keep your context',
   description: 'A home for the things you mean to keep.',
+  icons: {
+    icon: '/svg/favicon.svg',
+    shortcut: '/svg/favicon.svg',
+  },
   openGraph: {
     images: [
       {
@@ -31,7 +36,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={spaceGrotesk.className}>{children}</body>
+      <body className={spaceGrotesk.className}><UiSoundManager />{children}</body>
     </html>
   );
 }

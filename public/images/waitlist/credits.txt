@@ -1,0 +1,12 @@
+The six small, illustrative portrait images in this folder were sourced from Unsplash's image CDN.
+They are decorative stock portraits and do not identify waitlist subscribers.
+
+Unsplash photo IDs:
+- photo-1494790108377-be9c29b29330
+- photo-1500648767791-00dcc994a43e
+- photo-1534528741775-53994a69daeb
+- photo-1506794778202-cad84cf45f1d
+- photo-1507003211169-0a1dd7228f2d
+- photo-1517841905240-472988babdf9
+
+Unsplash license: https://unsplash.com/license

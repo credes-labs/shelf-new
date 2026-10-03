@@ -1,53 +1,168 @@
-.footer {
-  --footer-blue: #2430bc;
-  --brick-blue: #6cc4ff;
-  --brick-red: #ff6a3a;
-  --brick-yellow: #ffdb3a;
+.section {
   position: relative;
-  min-height: 720px;
+  container-type: inline-size; /* lets the stage size its cells from the section width (cqw) */
+  width: 100%;
   overflow: hidden;
-  color: var(--footer-blue);
-  background: #fff;
-  padding: 54px 5vw 0;
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--brick-footer-bg, #fffff2);
+  user-select: none;
+  -webkit-user-select: none;
 }
-.footerContent { position: relative; z-index: 2; max-width: 1280px; margin: 0 auto; }
-.socials { display: flex; align-items: center; gap: 8px; margin-top: 0; }
-.socials a { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--footer-blue); }
-.socials svg { display: block; width: 20px; height: 20px; }
-.halfCut { display: none; position: absolute; z-index: 0; left: 50%; bottom: 0; width: min(100%, 932px); height: auto; transform: translateX(-50%); filter: brightness(0) saturate(100%) invert(17%) sepia(94%) saturate(3766%) hue-rotate(235deg) brightness(78%) contrast(105%); opacity: .16; pointer-events: none; }
-.copyright { font-size: 13px; margin: 28px 0 42px; }
-.links { display: grid; grid-template-columns: 1fr 1fr; max-width: 550px; gap: 40px; font-size: 14px; }
-.links div { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
-.links span { opacity: .7; margin-bottom: 4px; }
-.links a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.socials a:hover { background: color-mix(in srgb, var(--footer-blue) 9%, transparent); }
-.gameHint { position: absolute; z-index: 4; top: 54px; right: 6vw; display: flex; align-items: center; gap: 20px; color: #81818b; font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; }
-.gameHint button { padding: 0 0 3px; color: inherit; border: 0; border-bottom: 1px solid currentColor; background: none; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
-.gameHint button:hover { color: var(--footer-blue); }
-.gameHint button:focus-visible { outline: 2px solid var(--footer-blue); outline-offset: 4px; }
-.stage { position: absolute; bottom: 0; left: 0; width: 100%; height: var(--wall-height); overflow: visible; touch-action: pan-y; }
-.wall { position: absolute; bottom: 0; overflow: visible; }
-.brick { position: absolute; display: flex; align-items: center; box-sizing: border-box; border: 1px solid var(--border); background: var(--color); box-shadow: inset 0 1px rgba(255,255,255,.34), inset 0 -2px rgba(0,0,0,.06); cursor: grab; touch-action: none; transition: left 140ms ease-out, bottom 240ms cubic-bezier(.2,.75,.25,1), transform 210ms cubic-bezier(.2,.75,.25,1), box-shadow 140ms ease, scale 140ms ease; }
-.brick[data-color='blue'] { --color: var(--brick-blue); --border: #3aa6f0; }
-.brick[data-color='red'] { --color: var(--brick-red); --border: #e8502a; }
-.brick[data-color='yellow'] { --color: var(--brick-yellow); --border: #e6bf1a; }
-.brick:active { cursor: grabbing; z-index: 5; }
-.brick[data-held] { z-index: 10; cursor: grabbing; scale: 1.045; box-shadow: inset 0 1px rgba(255,255,255,.34), inset 0 -2px rgba(0,0,0,.06), 0 14px 22px rgba(0,0,0,.24); transition: none; }
-.clearing { z-index: 8; pointer-events: none; animation: clearBrick 260ms ease-in calc(var(--clear-x) * 8ms) forwards; }
-@keyframes clearBrick { 35% { scale: 1.06; filter: brightness(1.16); } 100% { scale: .45; opacity: 0; } }
-.studs { display: flex; width: 100%; height: 100%; align-items: center; justify-content: space-around; pointer-events: none; }
-.studs i { display: block; flex: 0 0 calc(var(--cell) * .62); width: calc(var(--cell) * .62); aspect-ratio: 1; border: 1px solid var(--border); border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), transparent 60%), var(--color); box-shadow: 0 3px 4px rgba(0,0,0,.16); }
-@media (max-width: 700px) {
-  .footer { min-height: 840px; padding: 38px 20px 0; }
-  .halfCut { display: block; }
-  .stage { z-index: 1; }
-  .socials { gap: 8px; }
-  .stage { overflow: hidden; }
-  .footer::before { content: ''; position: absolute; z-index: 0; inset: 0 0 auto; height: 60%; background-color: #fff; background-image: url('/right_visual.png'); background-size: cover; background-position: center; background-repeat: no-repeat; background-blend-mode: darken; opacity: .28; -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%); pointer-events: none; }
-  .copyright { margin: 24px 0 38px; }
-  .links { font-size: 13px; gap: 12px; }
-  .links div { gap: 11px; }
-  .gameHint { top: auto; right: 20px; bottom: 8px; font-size: 9px; gap: 12px; }
+
+.section :global(.brick-footer-art) {
+  display: block;
+  width: min(100%, 932px);
+  height: auto;
+  margin: 0 auto;
 }
-@media (prefers-reduced-motion: reduce) { .brick { transition: none; } .clearing { animation: none; opacity: 0; } }
+
+/* one grid cell; the wall always fits the width exactly (capped at 52px) */
+.stage {
+  --cell: min(52px, calc(100cqw / var(--cols)));
+  position: relative;
+  width: calc(var(--cell) * var(--cols));
+  height: calc(var(--cell) * var(--rows));
+  margin-inline: auto;
+}
+
+.tone[data-color='blue'] { --c: #6cc4ff; --b: #3aa6f0; }
+.tone[data-color='red'] { --c: #ff6a3a; --b: #e8502a; }
+.tone[data-color='yellow'] { --c: #ffdb3a; --b: #e6bf1a; }
+
+/* ---------- bricks ---------- */
+
+.brick {
+  /* Position is the `translate` property, in percentages of the brick's own box, so
+     resizing the window never triggers a transition. rotate/scale compose around
+     the brick's centre. Grid slot comes in via --x --y --w; duration via --ms. */
+  --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  box-sizing: border-box;
+  width: calc(var(--cell) * var(--w));
+  height: var(--cell);
+  background: var(--c);
+  border: 1px solid var(--b);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  translate: calc(var(--x) / var(--w) * 100%) calc(var(--y) * 100%);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    translate var(--ms) var(--ease),
+    rotate 220ms ease-out,
+    scale 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+/* falling accelerates (ease-in) and ends at full speed, the thud in JS does the rest */
+.brick[data-motion='fall'] { --ease: cubic-bezier(0.55, 0.05, 0.9, 0.5); }
+
+/* lifted: lag/tilt come from the JS spring, which writes inline translate + rotate */
+.brick[data-held] {
+  z-index: 10;
+  cursor: grabbing;
+  scale: 1.05;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 18px 24px -8px rgba(0, 0, 0, 0.3);
+  transition: scale 140ms ease-out, box-shadow 140ms ease-out;
+}
+
+/* the brick you'd swap with */
+.swapTarget { scale: 0.93; filter: brightness(1.07); }
+
+/* intro: bricks start above the footer and drop in, lowest rows first */
+.brick[data-intro='pre'] {
+  translate: calc(var(--x) / var(--w) * 100%) calc((var(--y) - 11) * 100%);
+  opacity: 0;
+  transition: none;
+}
+.brick[data-intro='in'] {
+  --ease: cubic-bezier(0.55, 0.05, 0.9, 0.5);
+  transition:
+    translate 640ms var(--ease) var(--d),
+    opacity 120ms linear var(--d),
+    scale 160ms ease-out;
+}
+
+/* a cleared row flashes, then pops out left to right */
+.dying {
+  pointer-events: none;
+  animation: clear var(--clear-ms) cubic-bezier(0.5, 0, 0.75, 0) calc(var(--i) * var(--stagger)) forwards;
+}
+@keyframes clear {
+  0% { filter: brightness(1); scale: 1; opacity: 1; }
+  30% { filter: brightness(1.3) saturate(1.2); scale: 1.07; opacity: 1; }
+  100% { filter: brightness(1.15); scale: 0.35; opacity: 0; }
+}
+
+.cell {
+  flex: 1 1 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.stud {
+  width: calc(var(--cell) * 0.62);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--b);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 60%),
+    var(--c);
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.16);
+}
+
+/* where the held brick will land */
+.ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: calc(var(--cell) * var(--w));
+  height: var(--cell);
+  translate: calc(var(--x) / var(--w) * 100%) calc(var(--y) * 100%);
+  border: 2px dashed var(--b);
+  background: color-mix(in srgb, var(--c) 22%, transparent);
+  pointer-events: none;
+  transition: translate 110ms ease-out;
+}
+
+/* ---------- hint ---------- */
+
+.hint {
+  position: absolute;
+  top: calc(var(--cell, 46px) * 2);
+  right: 6vw;
+  z-index: 20;
+  display: flex;
+  gap: 1.1rem;
+  font: 11px/1 var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8a80;
+}
+
+.hint button {
+  padding: 0 0 3px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+}
+.hint button:hover { color: #3a3a35; }
+.hint button:focus-visible { outline: 2px solid #3aa6f0; outline-offset: 3px; }
+
+@media (min-width: 901px) {
+  .section { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brick, .ghost { transition: none; }
+  .dying { animation-duration: 1ms; animation-delay: 0s; }
+}

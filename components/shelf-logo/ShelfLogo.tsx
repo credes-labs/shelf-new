@@ -30,36 +30,28 @@ export function ShelfLogo({ className, animate = true }: Props) {
     let lastY = window.scrollY;
     let tickY = lastY;
     let pending = 0;
-    let lastTouch: number | null = null;
+    let lastTouchY: number | null = null;
     let raf = 0;
-
-    const onScroll = () => {
-      progress += window.scrollY - lastY;
-      lastY = window.scrollY;
-    };
-    // Wheel and touch cover the case where the page sits in a frame that doesn't scroll itself.
-    const onWheel = (e: WheelEvent) => {
-      pending += e.deltaY;
-    };
-    const onTouchStart = (e: TouchEvent) => {
-      lastTouch = e.touches[0].clientY;
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      const y = e.touches[0].clientY;
-      if (lastTouch !== null) pending += lastTouch - y;
-      lastTouch = y;
-    };
 
     const place = (el: SVGPathElement | null, s: number) => {
       el?.setAttribute("transform", `translate(${(UX * s).toFixed(3)} ${(UY * s).toFixed(3)})`);
     };
-
     const tick = () => {
-      // If the page really scrolled since the last frame, onScroll already counted it.
-      if (window.scrollY === tickY) progress += pending;
-      tickY = window.scrollY;
+      // Absolute resync: scroll deltas telescope, so folding the live scroll
+      // position in every frame keeps progress drift-proof even if scroll
+      // events are coalesced or missed (sticky heroes, momentum, iframes).
+      // Scroll events stay authoritative when the document moves; wheel/touch
+      // deltas also cover embedded scrolling contexts where window.scrollY stays put.
+      const y = window.scrollY;
+      progress += y - lastY;
+      lastY = y;
+      if (y === tickY) progress += pending;
+      tickY = y;
       pending = 0;
-      shown += (progress / PX_PER_LOOP - shown) * 0.12;
+      const target = progress / PX_PER_LOOP;
+      shown += (target - shown) * 0.12;
+      // Snap when converged so the loop settles instead of easing forever.
+      if (Math.abs(target - shown) < 0.0005) shown = target;
       const f = ((shown % 1) + 1) % 1;
       for (let k = 0; k < WINDOWS.length; k++) {
         place(panels.current[k], f * LOOP);
@@ -67,19 +59,44 @@ export function ShelfLogo({ className, animate = true }: Props) {
       }
       raf = requestAnimationFrame(tick);
     };
+    const onScroll = () => {
+      progress += window.scrollY - lastY;
+      lastY = window.scrollY;
+    };
+    const onWheel = (event: WheelEvent) => {
+      pending += event.deltaY;
+    };
+    const onTouchStart = (event: TouchEvent) => {
+      lastTouchY = event.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const currentY = event.touches[0]?.clientY;
+      if (currentY === undefined) return;
+      if (lastTouchY !== null) pending += lastTouchY - currentY;
+      lastTouchY = currentY;
+    };
+    const resync = () => {
+      // Resize/pageshow can jump the scroll position without scroll events firing.
+      lastY = window.scrollY;
+      tickY = window.scrollY;
+      pending = 0;
+    };
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("resize", resync);
+    window.addEventListener("pageshow", resync);
     raf = requestAnimationFrame(tick);
-
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("resize", resync);
+      window.removeEventListener("pageshow", resync);
     };
   }, [animate]);
 
