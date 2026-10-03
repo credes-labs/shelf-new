@@ -51,10 +51,13 @@
   z-index: 0;
   left: 50%;
   bottom: 0;
-  width: min(100%, 932px);
-  height: auto;
+  /* Exactly as tall as the bottom three rows — always full in a settled
+     wall — so the wall hides it completely until rows start clearing. */
+  height: calc(var(--cell) * 3);
+  width: auto;
+  max-width: none;
   transform: translateX(-50%);
-  /* Brand-blue watermark: the wall covers it until rows clear. */
+  /* Brand-blue watermark, revealed only as rows clear. */
   filter: brightness(0) saturate(100%) invert(17%) sepia(94%) saturate(3766%) hue-rotate(235deg) brightness(78%) contrast(105%);
   opacity: 0.16;
   pointer-events: none;

@@ -113,10 +113,13 @@ export function useBrickDrag(options: Options) {
       h.el.style.translate = `${h.x}px ${h.y}px`;
       h.el.style.rotate = `${h.rot}deg`;
 
-      // which slot would we land in? only tell React when it changes
+      // which slot would we land in? Only tell React when it changes.
+      // NOTE: the slot follows the pointer (tx/ty), not the lagging spring
+      // position (x/y) — otherwise a quick downward flick releases into a
+      // stale, occupied cell and the brick wrongly springs back.
       const { rows, cols, bricks, onPreview } = live.current;
-      const cx = Math.round(h.x / h.cell);
-      const cy = rows - 1 - Math.round(h.y / h.cell);
+      const cx = Math.round(h.tx / h.cell);
+      const cy = rows - 1 - Math.round(h.ty / h.cell);
       const slot = `${cx}:${cy}`;
       if (slot !== h.slot) {
         h.slot = slot;
@@ -145,8 +148,12 @@ export function useBrickDrag(options: Options) {
     held.current = null;
 
     const { bricks, cols, rows, onRelease } = live.current;
-    const cx = Math.round(h.x / h.cell);
-    const cy = rows - 1 - Math.round(h.y / h.cell);
+    // Release where the pointer is (tx/ty), not where the lagging spring
+    // happened to be — a fast downward flick must not resolve into the
+    // occupied cell the brick just left. Travel keeps the visual distance
+    // so the settle animation still matches what the hand just did.
+    const cx = Math.round(h.tx / h.cell);
+    const cy = rows - 1 - Math.round(h.ty / h.cell);
     const raw = cancelled ? null : resolveDrop(bricks, h.id, cx, cy, cols, rows);
     const drop = raw && raw.kind !== 'none' ? raw : null;
 
