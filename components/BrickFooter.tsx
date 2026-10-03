@@ -236,10 +236,10 @@ export default function BrickFooter() {
           <div>
             <span>Company</span>
             <a href="/about">About us</a>
-            <a href="#contact">Contact</a>
-            <a href="#security">Security</a>
+            <a href="/contact">Contact</a>
+            <a href="/security">Security</a>
             <a href="#privacy">Privacy Policy</a>
-            <a href="#terms">Terms and Conditions</a>
+            <a href="/terms">Terms and Conditions</a>
           </div>
           <div>
             <span>Download</span>

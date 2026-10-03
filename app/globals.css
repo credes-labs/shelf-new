@@ -237,14 +237,14 @@ button, input { font: inherit; }
     overflow: hidden;
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
-    gap: 12px;
-    padding: calc(68px + env(safe-area-inset-top)) clamp(14px, 5vw, 22px) max(18px, calc(env(safe-area-inset-bottom) + 12px));
+    gap: 16px;
+    padding: calc(96px + env(safe-area-inset-top)) clamp(14px, 5vw, 22px) max(30px, calc(env(safe-area-inset-bottom) + 22px));
     background: var(--blue);
   }
   .mobile-story-copy { position: relative; z-index: 4; grid-row: 2; width: 100%; max-width: 460px; margin: 0 auto; text-align: center; }
   .mobile-story-copy h1 { margin: 0; font-size: clamp(28px, 8vw, 39px); letter-spacing: -1.8px; line-height: .98; font-weight: 800; }
   .mobile-story-copy h1 em { font-family: Georgia, serif; font-weight: 400; }
-  .mobile-waitlist { margin: 8px auto 0; max-width: 230px; transform: none; }
+  .mobile-waitlist { margin: 18px auto 0; max-width: 230px; transform: none; }
   .mobile-story-art { position: relative; grid-row: 1; justify-self: stretch; align-self: stretch; width: 100%; height: 100%; min-height: 0; overflow: visible; }
   .mobile-story-art .sticker-set { position: absolute; inset: 0; pointer-events: auto; }
   .mobile-story-art .sticker-set-behind { z-index: 1; }
@@ -293,7 +293,7 @@ button, input { font: inherit; }
     background: #aeb3ed;
   }
   .hero-dots button.active { background: var(--dot-color, #fff); }
-  .mobile-footer-gap { display: block; height: clamp(16px, 3svh, 28px); background: var(--blue); }
+  .mobile-footer-gap { display: block; height: clamp(44px, 8svh, 76px); background: var(--blue); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -315,6 +315,8 @@ button, input { font: inherit; }
 .content-page-copy { width: min(100%, 850px); padding: 136px 5.5vw 76px; }
 .content-page-copy h1 { max-width: 760px; margin: 0; font-size: clamp(40px, 4.5vw, 62px); font-weight: 700; letter-spacing: -.055em; line-height: .98; }
 .page-eyebrow { margin: 0 0 20px; color: rgba(255,255,255,.68); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.page-date { margin: 18px 0 0; color: rgba(255,255,255,.62); font-size: 12px; }
+.content-section a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .page-lead { max-width: 650px; margin: 22px 0 0; color: rgba(255,255,255,.88); font-size: clamp(16px, 1.45vw, 19px); line-height: 1.55; }
 .content-section { max-width: 680px; margin-top: 42px; }
 .content-section h2 { margin: 0 0 12px; font-size: 21px; line-height: 1.2; letter-spacing: -.025em; }
@@ -355,7 +357,7 @@ button, input { font: inherit; }
   .site-mobile-menu { display: block; position: fixed; inset: 0; z-index: 100; width: 100%; height: 100vh; height: 100dvh; }
   .hero-dots-desktop { display: none; }
   .waitlist-inline { max-width: none; margin-top: 24px; }
-  .mobile-waitlist { margin: 8px auto 0; transform: none; }
+  .mobile-waitlist { margin: 18px auto 0; transform: none; }
   .waitlist-trigger { width: 148px; }
   .content-page-grid { display: block; min-height: 0; }
   .content-page-main { min-height: 70svh; }
@@ -471,7 +473,7 @@ input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] { 
 }
 
 @media (max-width: 900px) and (max-height: 650px) {
-  .mobile-story-step { gap: 6px; padding-top: calc(56px + env(safe-area-inset-top)); padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px)); }
+  .mobile-story-step { gap: 8px; padding-top: calc(72px + env(safe-area-inset-top)); padding-bottom: max(16px, calc(env(safe-area-inset-bottom) + 10px)); }
   .mobile-story-copy h1 { font-size: clamp(25px, 7.5vw, 34px); }
   .mobile-story-copy .dt-row-mobile { gap: 12px; margin-top: 12px; }
   .mobile-story-copy .dt-icon { width: 29px; height: 31px; }

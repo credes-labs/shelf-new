@@ -163,10 +163,9 @@ export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined =
           const isYou = person === YOU;
           return (
             <li key={isYou ? 'you' : `${person.name}-${index}`} className={styles.item} data-active={distance === 0 || undefined} data-you={isYou || undefined} style={{ '--i': index, '--shift': `${shift}px`, '--s': distance === 0 ? 1.2 : distance === 1 || distance === -1 ? 1.06 : 1, '--y': distance === 0 ? '-3px' : '0px' } as CSSProperties}>
-              <button type="button" className={styles.avatar} aria-label={person.name} onPointerEnter={event => { if (event.pointerType !== 'touch') setActive(index); }} onPointerDown={event => { if (event.pointerType === 'touch') setActive(current => current === index ? null : index); }} onFocus={() => setActive(index)} onBlur={() => setActive(null)}>
-                {isYou ? <span className={styles.you}><svg viewBox="0 0 24 24" width="55%" height="55%" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span> : <Face person={person} />}
-              </button>
-              <span className={styles.tip} role="tooltip" aria-hidden={active !== index}>{person.name}</span>
+                <button type="button" className={styles.avatar} aria-label={person.name} onPointerEnter={event => { if (event.pointerType !== 'touch') setActive(index); }} onPointerDown={event => { if (event.pointerType === 'touch') setActive(current => current === index ? null : index); }} onFocus={() => setActive(index)} onBlur={() => setActive(null)}>
+                  {isYou ? <span className={styles.you}><svg viewBox="0 0 24 24" width="55%" height="55%" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span> : <Face person={person} />}
+                </button>
             </li>
           );
         })}
