@@ -90,6 +90,8 @@ type Props = {
   count?: number;
   /** Shows the joining user's avatar after a successful signup. */
   joined?: boolean;
+  /** Hides the caption line under the avatars (the join button already says it). */
+  hideLabel?: boolean;
   /** Set false to skip the count request entirely (mock mode). */
   fetchCount?: boolean;
   tone?: 'light' | 'dark';
@@ -97,7 +99,7 @@ type Props = {
   className?: string;
 };
 
-export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined = false, fetchCount = true, tone = 'dark', size = 30, className }: Props) {
+export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined = false, hideLabel = false, fetchCount = true, tone = 'dark', size = 30, className }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const gate = useRef<'idle' | 'armed' | 'in'>('idle');
   const [fetchedCount, setFetchedCount] = useState<number | null>(null);
@@ -155,7 +157,7 @@ export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined =
   }, [active]);
 
   return (
-    <div ref={rootRef} className={[styles.root, className].filter(Boolean).join(' ')} data-tone={tone} data-phase={phase} style={{ '--size': `${size}px` } as CSSProperties}>
+    <div ref={rootRef} className={[styles.root, className].filter(Boolean).join(' ')} data-tone={tone} data-phase={phase} data-hide-label={hideLabel || undefined} style={{ '--size': `${size}px` } as CSSProperties}>
       <ul className={styles.stack} aria-label="Illustrative stock portraits" onPointerLeave={event => { if (event.pointerType !== 'touch') setActive(null); }}>
         {peopleList.map((person, index) => {
           const distance = active === null ? null : index - active;

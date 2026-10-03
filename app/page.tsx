@@ -158,8 +158,25 @@ function resetStickerParallax(event: ReactPointerEvent<HTMLElement>) {
   art.style.setProperty('--cursor-y-behind', '0px');
 }
 
-const stickerScenes: StickerScene[] = [
-  {
+type EdgeSticker = { file: string; style: React.CSSProperties };
+
+/** Small continuity stickers bridging one mobile panel into the next. */
+const edgeStickers: [EdgeSticker, EdgeSticker][] = [
+  [
+    { file: 'coin.svg', style: { right: '12px', top: 'calc(84px + env(safe-area-inset-top))', transform: 'rotate(-12deg)' } },
+    { file: 'flower.svg', style: { left: '12px', bottom: '10px', transform: 'rotate(10deg)' } },
+  ],
+  [
+    { file: 'smile sticker.svg', style: { left: '12px', top: 'calc(84px + env(safe-area-inset-top))', transform: 'rotate(8deg)' } },
+    { file: 'pinkstamp.svg', style: { right: '12px', bottom: '10px', transform: 'rotate(14deg)' } },
+  ],
+  [
+    { file: 'yellowstamp.svg', style: { right: '12px', top: 'calc(84px + env(safe-area-inset-top))', transform: 'rotate(-8deg)' } },
+    { file: 'controller.svg', style: { left: '12px', bottom: '10px', width: '54px', transform: 'rotate(-10deg)' } },
+  ],
+];
+
+const stickerScenes: StickerScene[] = [  {
     behind: [{ file: 'spider.svg', name: 'spider' }, { file: 'alarm clock.svg', name: 'alarm' }, { file: 'coin.svg', name: 'coin' }],
     front: [
       { file: 'yellowstamp.svg', name: 'special' }, { file: 'polaroid.svg', name: 'polaroid' },
@@ -319,6 +336,8 @@ export default function Home() {
         <div className="mobile-story">
           <SiteHeader className="mobile-story-nav" />
           {stickerScenes.map((scene, index) => <section className="mobile-story-step" key={index} aria-label={`Shelf story ${index + 1}`}>
+            <img className="mobile-story-edge" src={`/svg/${encodeURIComponent(edgeStickers[index][0].file)}`} alt="" aria-hidden="true" draggable="false" style={edgeStickers[index][0].style} />
+            <img className="mobile-story-edge" src={`/svg/${encodeURIComponent(edgeStickers[index][1].file)}`} alt="" aria-hidden="true" draggable="false" style={edgeStickers[index][1].style} />
             <div className="mobile-story-art" onPointerMove={moveStickerParallax} onPointerLeave={resetStickerParallax}>
               <div className="sticker-set sticker-set-behind">
                 {scene.behind.map(sticker => <InteractiveSticker key={sticker.name} sticker={sticker} />)}
@@ -333,10 +352,10 @@ export default function Home() {
             <div className="mobile-story-copy">
               {index === 0 && <h1>Keep your<br />context.<br />Find it when it<br /><HeadlineStyleToken /></h1>}
               {index === 0 && <DataTypeIcons className="dt-row-mobile" />}
-              {index === 0 && <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" />}
+              {index === 0 && <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" hideProofLabel />}
               {index === 1 && <h1>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>}
               {index === 2 && <h1>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>}
-              {index === 2 && <WaitlistSignup id="home-waitlist-mobile" className="waitlist-inline mobile-waitlist" />}
+              {index === 2 && <WaitlistSignup id="home-waitlist-mobile" className="waitlist-inline mobile-waitlist" hideProofLabel />}
             </div>
           </section>)}
         </div>

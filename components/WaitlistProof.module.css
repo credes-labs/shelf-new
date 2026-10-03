@@ -66,6 +66,7 @@
 .tip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -4px; border: 4px solid transparent; border-top-color: var(--tip-bg); }
 .item[data-active='true'] .tip { opacity: 1; translate: -50% 0; }
 .label { max-width: 220px; margin: 0; white-space: normal; }
+.root[data-hide-label] .label { display: none; }
 .count { font-variant-numeric: tabular-nums; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) {

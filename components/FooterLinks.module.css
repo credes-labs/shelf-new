@@ -1,0 +1,36 @@
+/* Footer hyperlinks on white-free pages: desktop only, since mobile
+   renders the full BrickFooter (with the same links) below the content. */
+
+.wrap {
+  display: none;
+  margin-top: 56px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+@media (min-width: 901px) {
+  .wrap { display: block; }
+}
+
+.socials { display: flex; align-items: center; gap: 12px; margin: 0; }
+.socials a {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+}
+.socials a:hover { background: rgba(255, 255, 255, 0.14); }
+.socials a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.socials svg { display: block; width: 24px; height: 24px; }
+
+.copyright { font-size: 13px; margin: 30px 0 40px; color: rgba(255, 255, 255, 0.85); }
+
+.links { display: grid; grid-template-columns: 1fr 1fr; max-width: 550px; gap: 40px; font-size: 14px; }
+.links div { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.links span { opacity: 0.65; margin-bottom: 4px; }
+.links a { color: inherit; text-decoration: none; }
+.links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.links a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }

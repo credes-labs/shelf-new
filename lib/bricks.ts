@@ -186,7 +186,10 @@ export function clearOrder(bricks: Brick[], ids: number[]): Map<number, number> 
 
 /**
  * What happens if brick `id` is released with its top-left corner over cell (x, row)?
- *  - empty space  -> it lands on the stack in that column range ("place")
+ *  - empty space with support (floor, or a brick directly underneath in every
+ *    column) -> it stays exactly where aimed ("place"). This lets a brick tuck
+ *    back into a gap below the stack top, e.g. the hole it was lifted from.
+ *  - empty space without support -> it falls onto the stack ("place").
  *  - one brick of equal width -> they trade places ("swap")
  *  - anything else -> not allowed ("none"), the brick springs back
  */
@@ -201,7 +204,12 @@ export function resolveDrop(bricks: Brick[], id: number, x: number, row: number,
   const hit = others.filter((b) => b.row === row && overlapsX(b, x, held.w));
 
   if (hit.length === 0) {
-    const landing = restRow(columnHeights(others, cols), x, held.w);
+    const supported =
+      row === 0 ||
+      Array.from({ length: held.w }, (_, i) => x + i).every((c) =>
+        others.some((b) => b.row === row - 1 && b.x <= c && c < b.x + b.w),
+      );
+    const landing = supported ? row : restRow(columnHeights(others, cols), x, held.w);
     if (landing >= rows) return none;
     const placed = settle([...others, { ...held, x, row: landing }], cols);
     return { kind: 'place', bricks: placed, x, row: landing, swapId: null };

@@ -1,5 +1,6 @@
 import ContentPage from '../../components/ContentPage';
 import WaitlistSignup from '../../components/WaitlistSignup';
+import FooterLinks from '../../components/FooterLinks';
 
 export const metadata = { title: 'About Shelf', description: 'The thinking behind Shelf and the context it keeps.' };
 
@@ -26,6 +27,7 @@ export default function AboutPage() {
         <p>We’re in early access. Join the waitlist to be first in line when Shelf opens up on iOS, web, and Mac.</p>
         <WaitlistSignup id="about-waitlist" className="content-waitlist" />
       </section>
+      <FooterLinks />
     </ContentPage>
   );
 }

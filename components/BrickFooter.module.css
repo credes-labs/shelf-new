@@ -44,7 +44,7 @@
 
 /* ---------- game over the halfcut logo ---------- */
 
-.gameWrap { position: relative; padding-top: 12px; padding-bottom: 56px; }
+.gameWrap { position: relative; padding-top: 12px; padding-bottom: 32px; }
 
 .halfCut {
   position: absolute;
@@ -222,7 +222,7 @@
     font-size: clamp(12px, 3.25vw, 13px);
     padding-bottom: 96px;
   }
-  .gameWrap { padding-bottom: 40px; }
+  .gameWrap { padding-bottom: 24px; }
   .hint { top: auto; right: 20px; bottom: calc(var(--cell, 30px) * var(--rows, 7) + 14px); font-size: 9px; }
 }
 
