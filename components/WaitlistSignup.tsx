@@ -13,6 +13,10 @@ const ModalPeels = lazy(() => import('./ModalPeels'));
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
+// The most recently claimed external open request (menu entry). Module scope
+// so every mounted instance sees it and only the first one opens its popup.
+let claimedWaitlistEvent = 0;
+
 const COUNTRIES = [
   { code: 'IN', name: 'India', dial: '+91' },
   { code: 'US', name: 'United States', dial: '+1' },
@@ -54,6 +58,21 @@ export default function WaitlistSignup({ id, className = '' }: { id: string; cla
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Opened from anywhere (e.g. the staggered menu entry). The first mounted
+  // instance claims the event so only one popup opens.
+  useEffect(() => {
+    const onExternalOpen = (event: Event) => {
+      const eventId = (event as CustomEvent<{ id?: number }>).detail?.id ?? 0;
+      if (eventId && claimedWaitlistEvent === eventId) return;
+      claimedWaitlistEvent = eventId;
+      if (status === 'success' || modalOpen) return;
+      playUiSound('waitlist');
+      setModalOpen(true);
+    };
+    window.addEventListener('shelf:open-waitlist', onExternalOpen);
+    return () => window.removeEventListener('shelf:open-waitlist', onExternalOpen);
+  }, [status, modalOpen]);
 
   // Lock background scroll + close on Escape while the popup is open.
   useEffect(() => {

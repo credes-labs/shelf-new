@@ -10,6 +10,7 @@ const menuItems = [
   { label: 'About', ariaLabel: 'Learn about Shelf', link: '/about' },
   { label: 'Features', ariaLabel: 'Explore Shelf features', link: '/features' },
   { label: 'Blogs', ariaLabel: 'Read the Shelf blog', link: '/blog' },
+  { label: 'Join waitlist', ariaLabel: 'Join the waitlist', link: '#waitlist', action: 'waitlist' as const },
 ];
 
 export default function SiteHeader({ className = '' }: { className?: string }) {

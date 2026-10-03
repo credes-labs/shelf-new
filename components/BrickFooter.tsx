@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { CSSProperties, TransitionEvent } from 'react';
-import Image from 'next/image';
 import styles from './BrickFooter.module.css';
 import {
   CLEAR_MS,
@@ -21,6 +20,24 @@ import {
 import { useBrickDrag } from '../lib/useBrickDrag';
 
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+type SocialName = 'instagram' | 'threads' | 'pinterest' | 'x' | 'linkedin' | 'facebook';
+
+function SocialGlyph({ name }: { name: SocialName }) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {name === 'instagram' && <><rect x="3.3" y="3.3" width="17.4" height="17.4" rx="5" /><circle cx="12" cy="12" r="4.1" /><circle cx="17.7" cy="6.6" r=".8" fill="currentColor" stroke="none" /></>}
+    {name === 'threads' && <path d="M18.8 10.2c-.6-4.3-3-6.6-6.9-6.6-4.5 0-7.2 3.2-7.2 8.4 0 5.4 2.6 8.5 7.1 8.5 3.6 0 6.2-1.8 6.2-4.7 0-2.4-1.6-3.8-4.4-3.8-2.4 0-3.8 1-3.8 2.6 0 1.3 1 2.2 2.4 2.2 1.9 0 3.1-1.5 3.1-3.9 0-3.3-1.6-5.1-4.5-5.1-1.5 0-2.8.6-3.8 1.7" />}
+    {name === 'pinterest' && <path d="M12 21a9 9 0 1 0-3.8-.8l1.4-5.8s.8 1.5 3 1.5c3.1 0 5.3-2.8 5.3-6.5 0-3.2-2.7-5.5-6.3-5.5-4.4 0-6.7 3.1-6.7 6.2 0 1.5.6 3 1.8 3.5.2.1.4 0 .5-.2l.3-1.2c.1-.2 0-.4-.1-.6-.4-.5-.7-1.2-.7-2.2 0-2.8 2.1-5.3 5.6-5.3 3 0 4.7 1.8 4.7 4.3 0 3.2-1.4 5.9-3.6 5.9-1.2 0-2.1-1-1.8-2.2.3-1.5 1-3.1 1-4.2 0-1-.5-1.8-1.6-1.8-1.3 0-2.3 1.3-2.3 3 0 1.1.4 1.9.4 1.9l-1.5 6.3" />}
+    {name === 'x' && <><path d="M4 4l16 16" /><path d="M20 4 4 20" /></>}
+    {name === 'linkedin' && <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M7.5 10v7M7.5 7.2v.1M11 17v-7h3.3v1.1c.5-.8 1.3-1.3 2.4-1.3 2 0 2.8 1.3 2.8 3.5V17M11 13.1c0-1.7 1-3.3 3.1-3.3" /></>}
+    {name === 'facebook' && <><circle cx="12" cy="12" r="9" /><path d="M13.2 20.8v-7.4h2.5l.4-2.8h-2.9V8.8c0-.8.2-1.4 1.4-1.4h1.6V4.9c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1v1.7H7.2v2.8h2.6v7.4" /></>}
+  </svg>;
+}
+
+const SOCIALS: SocialName[] = ['instagram', 'threads', 'pinterest', 'x', 'linkedin', 'facebook'];
+
+const socialLabel = (name: SocialName): string =>
+  name === 'x' ? 'X' : name[0].toUpperCase() + name.slice(1);
 
 /* ---------- state: a tiny phase machine (idle -> moving -> clearing -> moving -> ...) ---------- */
 
@@ -203,17 +220,45 @@ export default function BrickFooter() {
     <section
       ref={sectionRef}
       className={styles.section}
-      aria-label="Brick puzzle"
+      aria-label="Shelf footer with brick puzzle"
       style={{ '--cols': state.cols || 28, '--rows': rows, '--clear-ms': `${CLEAR_MS}ms`, '--stagger': `${STAGGER_MS}ms` } as CSSProperties}
     >
-      <Image className="brick-footer-art" src="/svg/shelf-footer.svg" alt="" aria-hidden="true" width={932} height={146} unoptimized />
-
-      <div className={styles.hint}>
-        <span>Drag | Match a full row</span>
-        <button type="button" onClick={() => dispatch({ type: 'reset' })}>Reset</button>
+      <div className={styles.footerContent}>
+        <nav className={styles.socials} aria-label="Social links">
+          {SOCIALS.map((name) => (
+            <a key={name} href={`#${name}`} aria-label={socialLabel(name)}>
+              <SocialGlyph name={name} />
+            </a>
+          ))}
+        </nav>
+        <p className={styles.copyright}>© Credes Techlabs 2026</p>
+        <div className={styles.links}>
+          <div>
+            <span>Company</span>
+            <a href="/about">About us</a>
+            <a href="#contact">Contact</a>
+            <a href="#security">Security</a>
+            <a href="#privacy">Privacy Policy</a>
+            <a href="#terms">Terms and Conditions</a>
+          </div>
+          <div>
+            <span>Download</span>
+            <a href="#ios">iOS</a>
+            <a href="#web">Web</a>
+            <a href="#macos">Mac os</a>
+          </div>
+        </div>
       </div>
 
-      <div ref={stageRef} className={styles.stage} aria-hidden="true" {...drag}>
+      <div className={styles.gameWrap}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className={styles.halfCut} src="/svg/shelf%20footer%20halfcut%20text.svg" alt="" aria-hidden="true" draggable={false} />
+        <div className={styles.hint}>
+          <span>Drag | Match a full row</span>
+          <button type="button" onClick={() => dispatch({ type: 'reset' })}>Reset</button>
+        </div>
+
+        <div ref={stageRef} className={styles.stage} aria-hidden="true" {...drag}>
         {preview && heldColor && preview.drop.kind === 'place' && (
           <div className={`${styles.ghost} ${styles.tone}`} data-color={heldColor} style={slot(preview.drop.x, preview.drop.row, state.bricks.find((b) => b.id === preview.heldId)!.w)} />
         )}
@@ -246,6 +291,7 @@ export default function BrickFooter() {
             ))}
           </div>
         ))}
+        </div>
       </div>
     </section>
   );

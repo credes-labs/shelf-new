@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { playUiSound } from '../lib/ui-sound';
 import './StaggeredMenu.css';
 
-export type StaggeredMenuItem = { label: string; ariaLabel?: string; link: string };
+export type StaggeredMenuItem = { label: string; ariaLabel?: string; link: string; action?: 'waitlist' };
 export type StaggeredMenuSocialItem = { label: string; link: string };
 
 type Props = {
@@ -466,16 +466,33 @@ export default function StaggeredMenu({
             {items && items.length ? (
               items.map((it, idx) => (
                 <li className="sm-panel-itemWrap" key={it.label + idx}>
-                  <Link
-                    className="sm-panel-item"
-                    href={it.link}
-                    aria-label={it.ariaLabel}
-                    data-index={idx + 1}
-                    tabIndex={open ? 0 : -1}
-                    onClick={() => { playUiSound('navigation'); closeMenu(); }}
-                  >
-                    <span className="sm-panel-itemLabel">{it.label}</span>
-                  </Link>
+                  {it.action === 'waitlist' ? (
+                    <button
+                      type="button"
+                      className="sm-panel-item"
+                      aria-label={it.ariaLabel ?? it.label}
+                      data-index={idx + 1}
+                      tabIndex={open ? 0 : -1}
+                      onClick={() => {
+                        playUiSound('navigation');
+                        closeMenu();
+                        window.dispatchEvent(new CustomEvent('shelf:open-waitlist', { detail: { id: Date.now() } }));
+                      }}
+                    >
+                      <span className="sm-panel-itemLabel">{it.label}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      className="sm-panel-item"
+                      href={it.link}
+                      aria-label={it.ariaLabel}
+                      data-index={idx + 1}
+                      tabIndex={open ? 0 : -1}
+                      onClick={() => { playUiSound('navigation'); closeMenu(); }}
+                    >
+                      <span className="sm-panel-itemLabel">{it.label}</span>
+                    </Link>
+                  )}
                 </li>
               ))
             ) : (

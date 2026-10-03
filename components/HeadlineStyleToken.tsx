@@ -11,6 +11,9 @@ const initial: Style = { font: 'Georgia', bold: false, italic: true, color: '#ff
 export default function HeadlineStyleToken() {
   const [style, setStyle] = useState<Style>(initial);
   const [selected, setSelected] = useState(false);
+  // The bounding box shows by default so the word reads as editable;
+  // it retires once the user interacts with (or dismisses) the control.
+  const [introduced, setIntroduced] = useState(false);
   const [menu, setMenu] = useState<'font' | 'color' | null>(null);
   const root = useRef<HTMLSpanElement>(null);
   const hydrated = useRef(false);
@@ -42,9 +45,10 @@ export default function HeadlineStyleToken() {
   function keyDown(event: React.KeyboardEvent<HTMLSpanElement>) {
     if (event.key === 'Escape') {
       event.stopPropagation();
+      setIntroduced(true);
       if (menu) setMenu(null); else setSelected(false);
     } else if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault(); setSelected(true);
+      event.preventDefault(); setIntroduced(true); setSelected(true);
     }
   }
 
@@ -55,11 +59,11 @@ export default function HeadlineStyleToken() {
       tabIndex={0}
       aria-label="Style the word matters"
       aria-pressed={selected}
-      onClick={() => { setSelected(value => !value); setMenu(null); }}
+      onClick={() => { setIntroduced(true); setSelected(value => !value); setMenu(null); }}
       onKeyDown={keyDown}
       style={{ fontFamily: style.font === 'Georgia' ? 'Georgia, serif' : `"${style.font}", ${style.font === 'Caveat' ? 'cursive' : 'sans-serif'}`, fontWeight: style.bold ? 700 : 400, fontStyle: style.italic ? 'italic' : 'normal', color: style.color }}
     >matters.</span>
-    <span className={`${styles.selection} ${selected ? styles.visible : ''}`} aria-hidden="true"><i /><i /><i /><i /></span>
+    <span className={`${styles.selection} ${selected || !introduced ? styles.visible : ''}`} aria-hidden="true"><i /><i /><i /><i /></span>
     <div className={`${styles.toolbar} ${selected ? styles.toolbarVisible : ''}`} role="toolbar" aria-label="Style matters" onPointerDown={event => event.preventDefault()}>
       <div className={styles.controlWrap}>
         <button type="button" className={`${styles.fontButton} ${menu === 'font' ? styles.active : ''}`} aria-haspopup="listbox" aria-expanded={menu === 'font'} onClick={() => setMenu(menu === 'font' ? null : 'font')} style={{ fontFamily: style.font }}>{style.font}<span className={styles.chevron}>⌄</span></button>

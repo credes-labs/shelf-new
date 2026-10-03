@@ -132,16 +132,16 @@ button, input { font: inherit; }
   .sticker { position: absolute; height: auto; pointer-events: auto; user-select: none; }
   .sticker.behind { z-index: 1; }
   .sticker.over { z-index: 3; }
-  .sticker-spider { left: 7%; top: 9%; width: 52px; transform: rotate(-12deg); }
-  .sticker-alarm { left: 76%; top: 48%; width: 38px; transform: rotate(9deg); }
-  .sticker-coin { left: 73%; top: 12%; width: 52px; transform: rotate(9deg); }
-  .sticker-special { left: 9%; top: 28%; width: 42px; transform: rotate(77deg); }
-  .sticker-polaroid { left: 72%; top: 39%; width: 75px; transform: rotate(9deg); }
-  .sticker-receipt { left: 7%; top: 62%; width: 54px; transform: rotate(-13deg); }
-  .sticker-smile { left: 5%; top: 80%; width: 48px; transform: rotate(-12deg); }
-  .sticker-flower { left: 48%; top: 76%; width: 65px; transform: rotate(-10deg); }
-  .sticker-pink { left: 75%; top: 72%; width: 50px; transform: rotate(12deg); }
-  .sticker-yellow { left: 45%; top: 94%; width: 32px; transform: rotate(-5deg); }
+  .sticker-spider { left: 3%; top: 5%; width: 64px; transform: rotate(-14deg); }
+  .sticker-alarm { left: 80%; top: 42%; width: 48px; transform: rotate(11deg); }
+  .sticker-coin { left: 68%; top: 6%; width: 64px; transform: rotate(7deg); }
+  .sticker-special { left: 5%; top: 24%; width: 54px; transform: rotate(77deg); }
+  .sticker-polaroid { left: 66%; top: 32%; width: 90px; transform: rotate(11deg); }
+  .sticker-receipt { left: 3%; top: 56%; width: 66px; transform: rotate(-15deg); }
+  .sticker-smile { left: 7%; top: 80%; width: 60px; transform: rotate(-10deg); }
+  .sticker-flower { left: 42%; top: 70%; width: 80px; transform: rotate(-12deg); }
+  .sticker-pink { left: 77%; top: 72%; width: 62px; transform: rotate(14deg); }
+  .sticker-yellow { left: 50%; top: 90%; width: 42px; transform: rotate(-7deg); }
 }
 
 /* Desktop: pin the composition while the three app screens and copy advance. */
@@ -249,28 +249,28 @@ button, input { font: inherit; }
   .mobile-story-art .sticker-set { position: absolute; inset: 0; pointer-events: auto; }
   .mobile-story-art .sticker-set-behind { z-index: 1; }
   .mobile-story-art .sticker-set-front { z-index: 3; }
-  .mobile-story-art .sticker-cd-blue { left: 7%; top: 8%; width: 56px; transform: rotate(-18deg); }
-  .mobile-story-art .sticker-cd-red { left: 77%; top: 12%; width: 54px; transform: rotate(12deg); }
-  .mobile-story-art .sticker-cd-yellow { left: 12%; top: 74%; width: 52px; transform: rotate(16deg); }
-  .mobile-story-art .sticker-ipod { left: 74%; top: 4%; width: 45px; transform: rotate(12deg); }
-  .mobile-story-art .sticker-notes { left: 5%; top: 49%; width: 55px; transform: rotate(-12deg); }
-  .mobile-story-art .sticker-key { left: 83%; top: 44%; width: 42px; transform: rotate(18deg); }
-  .mobile-story-art .sticker-cassette { left: 7%; top: 29%; width: 54px; transform: rotate(-10deg); }
-  .mobile-story-art .sticker-calculator { left: 81%; top: 28%; width: 48px; transform: rotate(9deg); }
-  .mobile-story-art .sticker-controller { left: 75%; top: 68%; width: 64px; transform: rotate(-8deg); }
-  .mobile-story-art .sticker-clothes { left: 5%; top: 66%; width: 58px; transform: rotate(8deg); }
-  .mobile-story-art .sticker-blue-flower { left: 57%; top: 78%; width: 55px; transform: rotate(-12deg); }
-  .mobile-story-art .sticker-wallet { left: 76%; top: 8%; width: 60px; transform: rotate(-9deg); }
-  .mobile-story-art .sticker-matcha { left: 8%; top: 16%; width: 49px; transform: rotate(-8deg); }
-  .mobile-story-art .sticker-umbrella { left: 3%; top: 39%; width: 56px; transform: rotate(-15deg); }
-  .mobile-story-art .sticker-piggybank { left: 77%; top: 48%; width: 60px; transform: rotate(6deg); }
-  .mobile-story-art .sticker-notepad { left: 10%; top: 84%; width: 56px; transform: rotate(10deg); }
+  .mobile-story-art .sticker-cd-blue { left: 4%; top: 5%; width: 68px; transform: rotate(-20deg); }
+  .mobile-story-art .sticker-cd-red { left: 74%; top: 8%; width: 66px; transform: rotate(14deg); }
+  .mobile-story-art .sticker-cd-yellow { left: 6%; top: 70%; width: 64px; transform: rotate(18deg); }
+  .mobile-story-art .sticker-ipod { left: 69%; top: 1%; width: 56px; transform: rotate(10deg); }
+  .mobile-story-art .sticker-notes { left: 1%; top: 42%; width: 68px; transform: rotate(-14deg); }
+  .mobile-story-art .sticker-key { left: 84%; top: 40%; width: 54px; transform: rotate(20deg); }
+  .mobile-story-art .sticker-cassette { left: 3%; top: 22%; width: 66px; transform: rotate(-8deg); }
+  .mobile-story-art .sticker-calculator { left: 79%; top: 24%; width: 60px; transform: rotate(7deg); }
+  .mobile-story-art .sticker-controller { left: 70%; top: 64%; width: 78px; transform: rotate(-6deg); }
+  .mobile-story-art .sticker-clothes { left: 1%; top: 62%; width: 70px; transform: rotate(10deg); }
+  .mobile-story-art .sticker-blue-flower { left: 52%; top: 74%; width: 66px; transform: rotate(-14deg); }
+  .mobile-story-art .sticker-wallet { left: 28%; top: 85%; width: 70px; transform: rotate(-7deg); }
+  .mobile-story-art .sticker-matcha { left: 5%; top: 13%; width: 60px; transform: rotate(-6deg); }
+  .mobile-story-art .sticker-umbrella { left: 89%; top: 56%; width: 64px; transform: rotate(-17deg); }
+  .mobile-story-art .sticker-piggybank { left: 78%; top: 50%; width: 68px; transform: rotate(8deg); }
+  .mobile-story-art .sticker-notepad { left: 9%; top: 83%; width: 66px; transform: rotate(12deg); }
   .mobile-phone-frame {
     position: absolute;
     z-index: 2;
     left: 50%;
     top: 50%;
-    width: min(54vw, 19svh, 210px);
+    width: min(68vw, 26svh, 272px);
     aspect-ratio: 409 / 843;
     background: transparent;
     transform: translate(-50%, -50%);
@@ -340,6 +340,13 @@ button, input { font: inherit; }
 .article-back:hover { color: #fff; }
 .article-body { max-width: 690px; margin-top: 34px; }
 .article-body p { margin: 0 0 22px; color: rgba(255,255,255,.86); font-size: 16px; line-height: 1.8; }
+.article-body h2 { margin: 36px 0 14px; color: #fff; font-size: 22px; line-height: 1.25; letter-spacing: -0.02em; }
+.article-body h2 + h2 { margin-top: 10px; }
+.article-series { max-width: 690px; margin-top: 42px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.22); }
+.article-series p { margin: 0 0 14px; color: rgba(255,255,255,.7); font-size: 14px; line-height: 1.7; }
+.article-series nav { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 14px; line-height: 1.6; }
+.article-series a { color: #fff; }
+.article-series a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
 @media (max-width: 900px) {
   .nav-wrap { align-items: center; padding: 0 20px; }
@@ -354,7 +361,7 @@ button, input { font: inherit; }
   .content-page-main { min-height: 70svh; }
   .content-page-copy { width: 100%; padding: 116px 24px 58px; }
   .content-page-copy h1 { font-size: clamp(36px, 10vw, 54px); }
-  .content-page-visual { position: relative; top: auto; height: 38svh; min-height: 230px; }
+  .content-page-visual { display: none; }
   .content-section { margin-top: 34px; }
   .blog-list { margin-top: 30px; }
   .article-content { padding-top: 116px; }
@@ -468,5 +475,5 @@ input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] { 
   .mobile-story-copy h1 { font-size: clamp(25px, 7.5vw, 34px); }
   .mobile-story-copy .dt-row-mobile { gap: 12px; margin-top: 12px; }
   .mobile-story-copy .dt-icon { width: 29px; height: 31px; }
-  .mobile-phone-frame { width: min(54vw, 18svh, 190px); }
+  .mobile-phone-frame { width: min(62vw, 24svh, 240px); }
 }

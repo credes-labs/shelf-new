@@ -284,6 +284,14 @@
   padding-right: 1.4em;
 }
 
+button.sm-panel-item {
+  background: none;
+  border: 0;
+  padding-left: 0;
+  font-family: inherit;
+  text-align: left;
+}
+
 .staggered-menu-panel .sm-socials-list .sm-socials-link {
   opacity: 1;
   transition: opacity 0.3s ease;

@@ -34,7 +34,8 @@ function PhoneScreens({ progress, screenImages, mobile = false }: { progress: nu
         const distance = Math.min(1, Math.abs(index - progress));
         // Preserve the original scroll-linked screen glide and blur. The two
         // screens overlap during the handoff, then settle sharply at each stop.
-        const blur = Math.sin(distance * Math.PI) * 7;
+        // Mobile keeps the glide but drops the blur.
+        const blur = mobile ? 0 : Math.sin(distance * Math.PI) * 7;
         const y = (index - progress) * 11;
         const brightness = 1 - Math.sin(distance * Math.PI) * 0.025;
         return <img
@@ -304,8 +305,8 @@ export default function Home() {
               <DataTypeIcons />
               <div className="hero-copy-slides">
                 <h1 id="hero-title" className="hero-copy-slide" aria-hidden={activeHeadline !== 0} style={{ opacity: weights[0], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress))) * 7}px)`, transform: `translate3d(0, ${-scrollProgress * 10}px, 0)`, pointerEvents: weights[0] > 0.8 ? 'auto' : 'none' }}>Keep your<br />context.<br />Find it when it<br /><HeadlineStyleToken /></h1>
-                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 1} style={{ opacity: weights[1], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 1))) * 7}px)`, transform: `translate3d(0, ${(1 - scrollProgress) * 10}px, 0)` }}>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>
-                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 2} style={{ opacity: weights[2], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 2))) * 7}px)`, transform: `translate3d(0, ${(2 - scrollProgress) * 10}px, 0)` }}>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>
+                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 1} style={{ opacity: weights[1], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 1))) * 7}px)`, transform: `translate3d(0, ${(1 - scrollProgress) * 10}px, 0)`, pointerEvents: weights[1] > 0.8 ? 'auto' : 'none' }}>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>
+                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 2} style={{ opacity: weights[2], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 2))) * 7}px)`, transform: `translate3d(0, ${(2 - scrollProgress) * 10}px, 0)`, pointerEvents: weights[2] > 0.8 ? 'auto' : 'none' }}>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>
               </div>
               <WaitlistSignup id="home-waitlist-desktop" className="waitlist-inline" />
             </div>
@@ -332,6 +333,7 @@ export default function Home() {
             <div className="mobile-story-copy">
               {index === 0 && <h1>Keep your<br />context.<br />Find it when it<br /><HeadlineStyleToken /></h1>}
               {index === 0 && <DataTypeIcons className="dt-row-mobile" />}
+              {index === 0 && <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" />}
               {index === 1 && <h1>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>}
               {index === 2 && <h1>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>}
               {index === 2 && <WaitlistSignup id="home-waitlist-mobile" className="waitlist-inline mobile-waitlist" />}
