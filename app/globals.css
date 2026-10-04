@@ -231,22 +231,44 @@ button, input { font: inherit; }
   .site-mobile-menu .sm-logo { display: none; }
   .mobile-story-nav .brand img { width: 100px; height: auto; }
   .mobile-story-step {
+    /* One full-screen story panel, laid out as an explicit vertical budget:
+       nav, copy block and gaps are subtracted first, the phone takes exactly
+       what is left. Sizing the phone from the viewport instead let it grow
+       past its own row and into the headline. */
+    --story-nav: calc(68px + env(safe-area-inset-top));
+    --story-top: calc(var(--story-nav) + clamp(6px, 1svh, 14px));
+    --story-bottom: max(12px, calc(env(safe-area-inset-bottom) + 10px));
+    /* The breathing room between the phone and the headline. */
+    --story-gap: clamp(18px, 2.3svh, 26px);
+    /* Height held for headline + icons + waitlist. Derived from the headline
+       so a wider screen (bigger type) cannot grow the copy back into the
+       phone, and reserved on every panel — not just the tall first one — so
+       the phone keeps one size and one position as the story advances.
+       3.8 = 4 headline lines at line-height .95; 142px = icons + waitlist. */
+    --story-h1: clamp(30px, 8.6vw, 40px);
+    --story-copy: calc(var(--story-h1) * 3.8 + 142px);
+    --story-art: max(200px, calc(100svh - var(--story-top) - var(--story-bottom) - var(--story-gap) - var(--story-copy)));
     height: 100svh;
     min-height: 100svh;
     position: relative;
     overflow: hidden;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    gap: 14px;
-    padding: calc(124px + env(safe-area-inset-top)) clamp(14px, 5vw, 22px) max(20px, calc(env(safe-area-inset-bottom) + 14px));
+    grid-template-rows: minmax(0, 1fr) minmax(var(--story-copy), auto);
+    gap: var(--story-gap);
+    padding: var(--story-top) clamp(20px, 5.4vw, 28px) var(--story-bottom);
     background: var(--blue);
   }
   .mobile-story-copy { position: relative; z-index: 4; grid-row: 2; width: 100%; max-width: 460px; margin: 0 auto; text-align: center; }
   /* Small continuity stickers bridging one panel into the next. */
   .mobile-story-edge { position: absolute; z-index: 1; width: 50px; height: auto; pointer-events: none; filter: drop-shadow(0 4px 8px rgba(10, 13, 70, .25)); }
-  .mobile-story-copy h1 { margin: 0; font-size: clamp(28px, 8vw, 39px); letter-spacing: -1.8px; line-height: .98; font-weight: 800; }
+  .mobile-story-copy h1 { margin: 0; font-size: var(--story-h1); letter-spacing: -1.9px; line-height: .95; font-weight: 800; }
   .mobile-story-copy h1 em { font-family: Georgia, serif; font-weight: 400; }
   .mobile-waitlist { margin: 18px auto 0; max-width: 230px; transform: none; }
+  /* The join-waitlist artwork carries ~20px of transparent padding under the
+     pill, so trim it from the flow and keep the spacing optical, not boxed. */
+  .mobile-story-copy .mobile-waitlist { margin-top: clamp(6px, 1svh, 14px); }
+  .mobile-story-copy .waitlist-trigger { margin-bottom: -12px; }
+  .mobile-story-copy .waitlist-proof { margin-top: 5px; }
   .mobile-story-art { position: relative; grid-row: 1; justify-self: stretch; align-self: stretch; width: 100%; height: 100%; min-height: 0; overflow: visible; }
   .mobile-story-art .sticker-set { position: absolute; inset: 0; pointer-events: auto; }
   .mobile-story-art .sticker-set-behind { z-index: 1; }
@@ -272,7 +294,10 @@ button, input { font: inherit; }
     z-index: 2;
     left: 50%;
     top: 50%;
-    width: min(68vw, 26svh, 272px);
+    /* Width derived from the art row's own height (409/843 ratio, minus a
+       little slack for the frame's 1.03 overscale) so the phone is as large
+       as the panel allows and still clears the headline. */
+    width: min(calc(var(--story-art) * 0.476), 78vw, 300px);
     aspect-ratio: 409 / 843;
     background: transparent;
     transform: translate(-50%, -50%);
@@ -453,7 +478,7 @@ input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] { 
 .waitlist-proof { margin-top: 7px; }
 @media (max-width: 900px) {
   .hero-copy > .dt-row { display: none; }
-  .mobile-story-copy .dt-row-mobile { display: flex; justify-content: center; gap: 18px; width: 100%; margin: clamp(18px, 3svh, 26px) auto 0; }
+  .mobile-story-copy .dt-row-mobile { display: flex; justify-content: center; gap: 18px; width: 100%; margin: clamp(8px, 1.2svh, 16px) auto 0; }
   .mobile-story-copy .dt-chip { padding: 6px 8px; font-size: 11px; }
   .mobile-story-copy .dt-chip:nth-child(2) { --x: -29px; }
   .mobile-story-copy .dt-chip:nth-child(3) { --x: 18px; }
@@ -475,9 +500,14 @@ input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] { 
 }
 
 @media (max-width: 900px) and (max-height: 650px) {
-  .mobile-story-step { gap: 8px; padding-top: calc(88px + env(safe-area-inset-top)); padding-bottom: max(16px, calc(env(safe-area-inset-bottom) + 10px)); }
-  .mobile-story-copy h1 { font-size: clamp(25px, 7.5vw, 34px); }
-  .mobile-story-copy .dt-row-mobile { gap: 12px; margin-top: 12px; }
+  /* Short viewports: tighten the same budget rather than hard-coding sizes,
+     so the headline, the reserve and the phone stay in step. */
+  .mobile-story-step {
+    --story-top: calc(var(--story-nav) + 6px);
+    --story-gap: clamp(12px, 2svh, 18px);
+    --story-h1: clamp(25px, 7.5vw, 34px);
+    --story-copy: calc(var(--story-h1) * 3.8 + 130px);
+  }
+  .mobile-story-copy .dt-row-mobile { gap: 12px; margin-top: 8px; }
   .mobile-story-copy .dt-icon { width: 29px; height: 31px; }
-  .mobile-phone-frame { width: min(62vw, 22svh, 240px); }
 }
