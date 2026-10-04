@@ -221,7 +221,7 @@ button, input { font: inherit; }
 
 @media (max-width: 900px) {
   .site-shell { overflow-x: clip; overflow-y: visible; }
-  .hero { position: relative; height: 345svh; min-height: 345svh; }
+  .hero { position: relative; height: 405svh; min-height: 405svh; }
   .hero-stage { display: none; }
   .mobile-story { display: block; position: relative; background: var(--blue); color: #fff; }
   .mobile-story-nav { position: sticky; top: 0; height: calc(68px + env(safe-area-inset-top)); margin-bottom: calc(-68px - env(safe-area-inset-top)); padding: env(safe-area-inset-top) 20px 0; align-items: center; z-index: 20; }
@@ -231,26 +231,27 @@ button, input { font: inherit; }
   .site-mobile-menu .sm-logo { display: none; }
   .mobile-story-nav .brand img { width: 100px; height: auto; }
   .mobile-story-step {
-    /* One story panel: taller than the viewport (115svh) so the phone has
+    /* One story panel: taller than the viewport (135svh) so the phone has
        room to grow while the headline keeps its own separate div with real
-       clearance. The hero stays exactly 3 x panel (345svh) — the same fixed
+       clearance. The hero stays exactly 3 x panel (405svh) — the same fixed
        structure as before, no auto heights, footer flow unchanged.
        Nav, copy block and gaps are subtracted first, the phone takes exactly
        what is left. Sizing the phone from the viewport instead let it grow
        past its own row and into the headline. */
-    --story-step: 115svh;
+    --story-step: 135svh;
     --story-nav: calc(68px + env(safe-area-inset-top));
-    --story-top: calc(var(--story-nav) + clamp(4px, 0.8svh, 10px));
+    --story-top: calc(var(--story-nav) + clamp(14px, 2svh, 24px));
     --story-bottom: max(10px, calc(env(safe-area-inset-bottom) + 8px));
-    /* The breathing room between the phone's div and the text div. */
-    --story-gap: clamp(30px, 3.8svh, 40px);
+    /* The breathing room between the phone's div and the text div. Sized so
+       the copy sits near the middle of the space between two phones. */
+    --story-gap: clamp(80px, 11.5svh, 130px);
     /* Height held for headline + icons + waitlist. Derived from the headline
        so a wider screen (bigger type) cannot grow the copy back into the
        phone, and reserved on every panel — not just the tall first one — so
        the phone keeps one size and one position as the story advances.
        3.8 = 4 headline lines at line-height .95; 100px = panel 3's waitlist
        with faces (tallest stack: panel 1 has no faces, panel 2 has icons). */
-    --story-h1: clamp(30px, 8.6vw, 40px);
+    --story-h1: clamp(42px, 12vw, 55px);
     --story-copy: calc(var(--story-h1) * 3.8 + 100px);
     --story-art: max(200px, calc(var(--story-step) - var(--story-top) - var(--story-bottom) - var(--story-gap) - var(--story-copy)));
     height: var(--story-step);
@@ -304,7 +305,7 @@ button, input { font: inherit; }
     /* Width derived from the art row's own height (409/843 ratio, minus a
        little slack for the frame's 1.03 overscale) so the phone is as large
        as the panel allows and still clears the headline. */
-    width: min(calc(var(--story-art) * 0.482), 78vw, 340px);
+    width: min(calc(var(--story-art) * 0.482), 82vw, 360px);
     aspect-ratio: 409 / 843;
     background: transparent;
     transform: translate(-50%, -50%);
@@ -511,8 +512,8 @@ input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] { 
      so the headline, the reserve and the phone stay in step. */
   .mobile-story-step {
     --story-top: calc(var(--story-nav) + 6px);
-    --story-gap: clamp(14px, 2.4svh, 22px);
-    --story-h1: clamp(25px, 7.5vw, 34px);
+    --story-gap: clamp(22px, 3.4svh, 32px);
+    --story-h1: clamp(34px, 10vw, 45px);
     --story-copy: calc(var(--story-h1) * 3.8 + 96px);
   }
   .mobile-story-copy .dt-row-mobile { gap: 12px; margin-top: 8px; }

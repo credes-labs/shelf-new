@@ -265,6 +265,65 @@ export default function Home() {
     };
   }, []);
 
+  // Mobile-only scroll jitter: while scrolling, drive the same parallax
+  // vars the desktop cursor uses, from scroll velocity plus a fast wobble,
+  // so stickers vibrate in place around the phone. Settles back to 0 idle.
+  useEffect(() => {
+    let raf = 0;
+    let lastY = window.scrollY;
+    let tickCount = 0;
+    let idleTimer = 0;
+    const clearVars = () => {
+      document.querySelectorAll<HTMLElement>('.mobile-story-art').forEach(art => {
+        art.style.setProperty('--cursor-x-front', '0px');
+        art.style.setProperty('--cursor-y-front', '0px');
+        art.style.setProperty('--cursor-x-behind', '0px');
+        art.style.setProperty('--cursor-y-behind', '0px');
+      });
+    };
+    const tick = () => {
+      raf = 0;
+      if (!window.matchMedia('(max-width: 900px)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const y = window.scrollY;
+      const velocity = y - lastY;
+      lastY = y;
+      if (Math.abs(velocity) < 0.4) {
+        clearVars();
+        return;
+      }
+      tickCount += 1;
+      const lean = Math.max(-14, Math.min(14, velocity * 0.55));
+      const wobbleX = Math.sin(tickCount * 2.6) * 3.2;
+      const wobbleY = Math.cos(tickCount * 3.3) * 3.2;
+      document.querySelectorAll<HTMLElement>('.mobile-story-art').forEach((art, index) => {
+        const flip = index % 2 ? -1 : 1;
+        art.style.setProperty('--cursor-x-front', `${(lean + wobbleX * flip).toFixed(1)}px`);
+        art.style.setProperty('--cursor-y-front', `${(-lean * 0.6 + wobbleY).toFixed(1)}px`);
+        art.style.setProperty('--cursor-x-behind', `${(lean * 0.5 + wobbleX * 0.5 * flip).toFixed(1)}px`);
+        art.style.setProperty('--cursor-y-behind', `${(-lean * 0.3 + wobbleY * 0.5).toFixed(1)}px`);
+      });
+    };
+    const onScroll = () => {
+      if (!window.matchMedia('(max-width: 900px)').matches) return;
+      if (!raf) raf = window.requestAnimationFrame(tick);
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        lastY = window.scrollY;
+        if (window.matchMedia('(max-width: 900px)').matches) clearVars();
+      }, 150);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll, true);
+      if (raf) window.cancelAnimationFrame(raf);
+      window.clearTimeout(idleTimer);
+      clearVars();
+    };
+  }, []);
+
   const screenImages = ['/svg/iphone%20screen%201.svg', '/svg/iphone%20screen%202.svg', '/svg/iphone%20screen%203.svg'];
   const transition = scrollProgress - Math.floor(scrollProgress);
   const easedTransition = transition * transition * (3 - 2 * transition);
