@@ -1,8 +1,6 @@
 # Shelf — Keep your context
 
-A Next.js (App Router) marketing + waitlist site for Shelf: a scroll-driven
-hero with an iPhone preview and sticker artwork, content pages, a Supabase-backed
-waitlist API, and a playable brick footer on mobile.
+https://www.figma.com/design/qQj4zYcE4pTbZ6Y9aEoc6b/shelf-moodboard?node-id=0-1&t=nlT4upWMDwjQEkjY-1
 
 ## Quick start
 
