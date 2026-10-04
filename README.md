@@ -27,19 +27,6 @@ npm run lint
 npm run build
 ```
 
-## Features
-
-- **Scroll hero** (`app/page.tsx`) — desktop shows a pinned 300vh scene that
-  crossfades iPhone screens, headlines and sticker sets; mobile shows story
-  panels (one per screen) with the same content.
-- **Interactive stickers** — hover/tap any sticker for a chat bubble; on desktop
-  they also parallax with the cursor, on mobile they vibrate while scrolling.
-- **Waitlist** (`WaitlistSignup` + `/api/waitlist`) — modal form, success card
-  with download/share, live join counter with a shared 60s cache.
-- **Brick footer** (`BrickFooter`, mobile only) — a draggable brick wall game
-  over a half-cut logo watermark. Never renders on desktop.
-- **UI sounds** (`lib/ui-sound.ts`) — scroll ticks and interaction sounds with
-  reduced-motion support.
 
 ## Tech stack
 
