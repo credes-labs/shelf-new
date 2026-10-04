@@ -44,7 +44,7 @@ const PEELS: PeelDef[] = [
   { file: 'controller.svg', place: 'f11', width: 94, rotate: 10, peelDirection: 270, hover: 28, active: 44 },
 ];
 
-export default function WaitlistSignup({ id, className = '', hideProofLabel = false }: { id: string; className?: string; hideProofLabel?: boolean }) {
+export default function WaitlistSignup({ id, className = '', hideProofLabel = false, hideFaces = false }: { id: string; className?: string; hideProofLabel?: boolean; hideFaces?: boolean }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState('');
@@ -186,7 +186,7 @@ export default function WaitlistSignup({ id, className = '', hideProofLabel = fa
           <Image src="/svg/join%20waitlist.svg" alt="Join waitlist" width={172} height={70} unoptimized />
         </button>
       )}
-      <WaitlistProof joined={joined} hideLabel={hideProofLabel} className="waitlist-proof" />
+      <WaitlistProof joined={joined} hideLabel={hideProofLabel} hideFaces={hideFaces} className="waitlist-proof" />
 
       {mounted && modalOpen && createPortal(
         <div className={modal.backdrop} onClick={closeModal}>

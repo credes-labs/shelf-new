@@ -351,9 +351,9 @@ export default function Home() {
             </div>
             <div className="mobile-story-copy">
               {index === 0 && <h1>Keep your<br />context.<br />Find it when it<br /><HeadlineStyleToken /></h1>}
-              {index === 0 && <DataTypeIcons className="dt-row-mobile" />}
-              {index === 0 && <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" hideProofLabel />}
+              {index === 0 && <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" hideProofLabel hideFaces />}
               {index === 1 && <h1>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>}
+              {index === 1 && <DataTypeIcons className="dt-row-mobile" />}
               {index === 2 && <h1>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>}
               {index === 2 && <WaitlistSignup id="home-waitlist-mobile" className="waitlist-inline mobile-waitlist" hideProofLabel />}
             </div>

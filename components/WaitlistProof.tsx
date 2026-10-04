@@ -92,6 +92,8 @@ type Props = {
   joined?: boolean;
   /** Hides the caption line under the avatars (the join button already says it). */
   hideLabel?: boolean;
+  /** Hides the avatar faces entirely (used on mobile panel 1 to free space). */
+  hideFaces?: boolean;
   /** Set false to skip the count request entirely (mock mode). */
   fetchCount?: boolean;
   tone?: 'light' | 'dark';
@@ -99,7 +101,7 @@ type Props = {
   className?: string;
 };
 
-export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined = false, hideLabel = false, fetchCount = true, tone = 'dark', size = 30, className }: Props) {
+export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined = false, hideLabel = false, hideFaces = false, fetchCount = true, tone = 'dark', size = 30, className }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const gate = useRef<'idle' | 'armed' | 'in'>('idle');
   const [fetchedCount, setFetchedCount] = useState<number | null>(null);
@@ -158,7 +160,7 @@ export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined =
 
   return (
     <div ref={rootRef} className={[styles.root, className].filter(Boolean).join(' ')} data-tone={tone} data-phase={phase} data-hide-label={hideLabel || undefined} style={{ '--size': `${size}px` } as CSSProperties}>
-      <ul className={styles.stack} aria-label="Illustrative stock portraits" onPointerLeave={event => { if (event.pointerType !== 'touch') setActive(null); }}>
+      {!hideFaces && <ul className={styles.stack} aria-label="Illustrative stock portraits" onPointerLeave={event => { if (event.pointerType !== 'touch') setActive(null); }}>
         {peopleList.map((person, index) => {
           const distance = active === null ? null : index - active;
           const shift = distance === null || distance === 0 ? 0 : Math.sign(distance) * Math.max(3, 11 - Math.abs(distance) * 3);
@@ -171,7 +173,7 @@ export default function WaitlistProof({ people = DEFAULT_PEOPLE, count, joined =
             </li>
           );
         })}
-      </ul>
+      </ul>}
       <p className={styles.label}>
         {actualCount === null ? <span>Join the early access list</span> : <>
           <span className={styles.sr}>{actualCount.toLocaleString()} people already joined</span>
