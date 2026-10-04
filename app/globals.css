@@ -236,17 +236,17 @@ button, input { font: inherit; }
        what is left. Sizing the phone from the viewport instead let it grow
        past its own row and into the headline. */
     --story-nav: calc(68px + env(safe-area-inset-top));
-    --story-top: calc(var(--story-nav) + clamp(6px, 1svh, 14px));
-    --story-bottom: max(12px, calc(env(safe-area-inset-bottom) + 10px));
+    --story-top: calc(var(--story-nav) + clamp(4px, 0.8svh, 10px));
+    --story-bottom: max(10px, calc(env(safe-area-inset-bottom) + 8px));
     /* The breathing room between the phone and the headline. */
-    --story-gap: clamp(18px, 2.3svh, 26px);
+    --story-gap: clamp(22px, 3svh, 32px);
     /* Height held for headline + icons + waitlist. Derived from the headline
        so a wider screen (bigger type) cannot grow the copy back into the
        phone, and reserved on every panel — not just the tall first one — so
        the phone keeps one size and one position as the story advances.
-       3.8 = 4 headline lines at line-height .95; 142px = icons + waitlist. */
+        3.8 = 4 headline lines at line-height .95; 134px = icons + waitlist. */
     --story-h1: clamp(30px, 8.6vw, 40px);
-    --story-copy: calc(var(--story-h1) * 3.8 + 142px);
+    --story-copy: calc(var(--story-h1) * 3.8 + 134px);
     --story-art: max(200px, calc(100svh - var(--story-top) - var(--story-bottom) - var(--story-gap) - var(--story-copy)));
     height: 100svh;
     min-height: 100svh;
@@ -297,7 +297,7 @@ button, input { font: inherit; }
     /* Width derived from the art row's own height (409/843 ratio, minus a
        little slack for the frame's 1.03 overscale) so the phone is as large
        as the panel allows and still clears the headline. */
-    width: min(calc(var(--story-art) * 0.476), 78vw, 300px);
+    width: min(calc(var(--story-art) * 0.482), 78vw, 300px);
     aspect-ratio: 409 / 843;
     background: transparent;
     transform: translate(-50%, -50%);
@@ -504,9 +504,9 @@ input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] { 
      so the headline, the reserve and the phone stay in step. */
   .mobile-story-step {
     --story-top: calc(var(--story-nav) + 6px);
-    --story-gap: clamp(12px, 2svh, 18px);
+    --story-gap: clamp(14px, 2.4svh, 22px);
     --story-h1: clamp(25px, 7.5vw, 34px);
-    --story-copy: calc(var(--story-h1) * 3.8 + 130px);
+    --story-copy: calc(var(--story-h1) * 3.8 + 124px);
   }
   .mobile-story-copy .dt-row-mobile { gap: 12px; margin-top: 8px; }
   .mobile-story-copy .dt-icon { width: 29px; height: 31px; }
