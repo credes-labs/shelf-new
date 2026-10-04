@@ -1,4 +1,4 @@
-# Shelf — <img width="780" height="784" alt="image" src="https://github.com/user-attachments/assets/51eae049-6905-487b-a0d5-b8e35062cf77" />
+# <img src="https://github.com/user-attachments/assets/51eae049-6905-487b-a0d5-b8e35062cf77" width="32" alt="Shelf logo" /> Shelf
 
 
 <img width="3838" height="2156" alt="image" src="https://github.com/user-attachments/assets/595a8ec0-b8e6-4068-9374-314f59e24f74" />
