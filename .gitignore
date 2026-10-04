@@ -20,6 +20,10 @@
 # Local deployments
 /.vercel/
 
+# Agent / tooling workspaces (local-only, never commit)
+/.claude/
+/.next-codex-verify-*/
+
 # Environment and secrets (keep example templates)
 .env*
 !.env.example
