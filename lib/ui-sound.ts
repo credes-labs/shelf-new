@@ -18,6 +18,30 @@ type Tone = { frequency: number; type: OscillatorType; duration: number; volume:
 let context: AudioContext | null = null;
 let unlockInstalled = false;
 let soundEnabled = true;
+let soundPreferenceRead = false;
+
+const SOUND_STORAGE_KEY = 'shelf-sound';
+const soundListeners = new Set<() => void>();
+
+/** Read the stored preference once per session, on the client only. */
+function readSoundPreference(): boolean | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = window.localStorage.getItem(SOUND_STORAGE_KEY);
+    if (stored === 'on') return true;
+    if (stored === 'off') return false;
+  } catch {
+    /* Storage may be disabled; fall back to the default. */
+  }
+  return null;
+}
+
+function ensureSoundPreference(): void {
+  if (soundPreferenceRead || typeof window === 'undefined') return;
+  soundPreferenceRead = true;
+  const stored = readSoundPreference();
+  if (stored !== null) soundEnabled = stored;
+}
 
 /** Sounds that fired while the context was locked; replayed on the next gesture. */
 const pendingPlays: { kind: UiSound; options: PlayOptions }[] = [];
@@ -103,6 +127,7 @@ function installUnlock(): void {
   unlockInstalled = true;
   const unlock = () => {
     try {
+      if (!soundEnabled) return;
       const audio = getContext();
       if (!audio) return;
       if (audio.state === 'suspended') {
@@ -129,6 +154,10 @@ function installUnlock(): void {
 
 /** Replay sounds that fired while the context was still locked. */
 function flushPending(): void {
+  if (!soundEnabled) {
+    pendingPlays.length = 0;
+    return;
+  }
   if (!context || context.state !== 'running' || !pendingPlays.length) return;
   const jobs = pendingPlays.splice(0, pendingPlays.length);
   for (const job of jobs) playUiSound(job.kind, { ...job.options, force: true });
@@ -146,10 +175,48 @@ export function lastSoundAgeMs(now = performance.now()): number {
 
 export function setSoundEnabled(enabled: boolean): void {
   soundEnabled = enabled;
+  soundPreferenceRead = true;
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(SOUND_STORAGE_KEY, enabled ? 'on' : 'off');
+    } catch {
+      /* Storage may be disabled; the choice still applies for this visit. */
+    }
+  }
+
+  if (!enabled) {
+    // Hard mute: drop anything queued and silence the shared context.
+    pendingPlays.length = 0;
+    if (context && context.state === 'running') void context.suspend().catch(() => undefined);
+  } else if (context && context.state === 'suspended') {
+    void context.resume().catch(() => undefined);
+  }
+
+  soundListeners.forEach((listener) => listener());
 }
 
 export function isSoundEnabled(): boolean {
+  ensureSoundPreference();
   return soundEnabled;
+}
+
+/** Snapshot for useSyncExternalStore: stable between changes. */
+export function getSoundSnapshot(): boolean {
+  ensureSoundPreference();
+  return soundEnabled;
+}
+
+/** The server has no stored preference, so it always renders sound on. */
+export function getServerSoundSnapshot(): boolean {
+  return true;
+}
+
+/** Subscribe to sound on/off changes (React and plain listeners). */
+export function subscribeSound(listener: () => void): () => void {
+  soundListeners.add(listener);
+  return () => {
+    soundListeners.delete(listener);
+  };
 }
 
 export type PlayOptions = {

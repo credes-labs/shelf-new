@@ -1,0 +1,50 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle svg { display: block; }
+
+/* Desktop: a small button at the bottom of the cobalt pane, left of the dots. */
+.corner {
+  position: fixed;
+  right: calc(38% + 4.4vw + 68px);
+  bottom: 10px;
+  z-index: 40;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+  opacity: .78;
+  transition: opacity 180ms ease, translate 180ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.corner:hover { opacity: 1; translate: 0 -1px; }
+.corner:active { translate: 0 0; }
+.corner:focus-visible { outline: 2px solid #80d0ff; outline-offset: 3px; }
+.corner svg { width: 15px; height: 15px; }
+
+/* Mobile: the same button, next to the staggered menu button. */
+.header {
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  opacity: .82;
+  transition: opacity 180ms ease, translate 180ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.header:hover { opacity: 1; translate: 0 -1px; }
+.header:active { translate: 0 0; }
+.header:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.header svg { width: 17px; height: 17px; }
+
+@media (max-width: 900px) {
+  .corner { display: none; }
+}

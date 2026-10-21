@@ -31,6 +31,7 @@ export default function SiteHeader({ className = '' }: { className?: string }) {
         colors={['#6972e3', '#2430bc']}
         displaySocials={false}
         displayItemNumbering
+        showSoundToggle
         menuButtonColor="#fff"
         openMenuButtonColor="#171717"
         accentColor="#2430bc"

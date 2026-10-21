@@ -250,6 +250,12 @@
   color: var(--sm-accent, #ff0000);
 }
 
+.sm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .sm-panel-title {
   margin: 0;
   font-size: 1rem;
@@ -280,6 +286,7 @@
     background 0.25s,
     color 0.25s;
   display: inline-block;
+  width: 100%;
   text-decoration: none;
   padding-right: 1.4em;
 }
@@ -337,6 +344,20 @@ button.sm-panel-item {
   pointer-events: none;
   user-select: none;
   opacity: var(--sm-num-opacity, 0);
+}
+
+@media (max-width: 430px) {
+  /* Narrow screens: give the panel room so the longest label and its index
+     number both fit, instead of the number clipping off the edge. */
+  .staggered-menu-panel,
+  .sm-prelayers {
+    width: min(86vw, 420px);
+  }
+
+  .sm-panel-item {
+    font-size: 2.6rem;
+    letter-spacing: -1.4px;
+  }
 }
 
 @media (max-width: 1024px) {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import Image from 'next/image';
 import { playUiSound } from '../lib/ui-sound';
+import SoundToggle from './SoundToggle';
 import './StaggeredMenu.css';
 
 export type StaggeredMenuItem = { label: string; ariaLabel?: string; link: string; action?: 'waitlist' };
@@ -18,6 +19,7 @@ type Props = {
   displaySocials?: boolean;
   displayItemNumbering?: boolean;
   className?: string;
+  showSoundToggle?: boolean;
   logoUrl?: string;
   menuButtonColor?: string;
   openMenuButtonColor?: string;
@@ -37,6 +39,7 @@ export default function StaggeredMenu({
   displaySocials = true,
   displayItemNumbering = true,
   className = '',
+  showSoundToggle = false,
   logoUrl = '/svg/shelf%20logo.svg',
   menuButtonColor = '#fff',
   openMenuButtonColor = '#fff',
@@ -435,29 +438,32 @@ export default function StaggeredMenu({
             unoptimized
           />
         </Link>
-        <button
-          ref={toggleBtnRef}
-          className="sm-toggle"
-          aria-label={open ? 'Close menu' : 'Open menu'}
-          aria-expanded={open}
-          aria-controls={panelId}
-          onClick={toggleMenu}
-          type="button"
-        >
-          <span ref={textWrapRef} className="sm-toggle-textWrap" aria-hidden="true">
-            <span ref={textInnerRef} className="sm-toggle-textInner">
-              {textLines.map((l, i) => (
-                <span className="sm-toggle-line" key={`${l}-${i}`}>
-                  {l}
-                </span>
-              ))}
+        <div className="sm-header-actions">
+          {showSoundToggle && <SoundToggle variant="header" />}
+          <button
+            ref={toggleBtnRef}
+            className="sm-toggle"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={toggleMenu}
+            type="button"
+          >
+            <span ref={textWrapRef} className="sm-toggle-textWrap" aria-hidden="true">
+              <span ref={textInnerRef} className="sm-toggle-textInner">
+                {textLines.map((l, i) => (
+                  <span className="sm-toggle-line" key={`${l}-${i}`}>
+                    {l}
+                  </span>
+                ))}
+              </span>
             </span>
-          </span>
-          <span ref={iconRef} className="sm-icon" aria-hidden="true">
-            <span ref={plusHRef} className="sm-icon-line" />
-            <span ref={plusVRef} className="sm-icon-line sm-icon-line-v" />
-          </span>
-        </button>
+            <span ref={iconRef} className="sm-icon" aria-hidden="true">
+              <span ref={plusHRef} className="sm-icon-line" />
+              <span ref={plusVRef} className="sm-icon-line sm-icon-line-v" />
+            </span>
+          </button>
+        </div>
       </header>
 
       <aside id={panelId} ref={panelRef} className="staggered-menu-panel" aria-hidden={!open}>

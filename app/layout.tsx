@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Space_Grotesk } from 'next/font/google';
 import UiSoundManager from '../components/UiSoundManager';
+import SoundToggle from '../components/SoundToggle';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
 
@@ -36,7 +37,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={spaceGrotesk.className}><UiSoundManager />{children}</body>
+      <body className={spaceGrotesk.className}><UiSoundManager />{children}<SoundToggle variant="corner" /></body>
     </html>
   );
 }
