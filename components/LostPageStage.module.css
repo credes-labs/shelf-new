@@ -1,0 +1,135 @@
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+}
+
+.visual {
+  position: relative;
+  width: min(100%, 520px, 52svh);
+  aspect-ratio: 576 / 432;
+}
+
+/* Stickers sit on the corners of the maze, like objects stuck to a page. */
+.stickers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sticker {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  rotate: var(--sticker-angle);
+  transition: translate 240ms cubic-bezier(.2, .8, .2, 1), scale 240ms cubic-bezier(.2, .8, .2, 1);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+
+.art { display: block; }
+.art img { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 3px rgb(12 18 82 / 22%)); }
+.sticker:hover, .sticker:focus-visible, .sticker[aria-pressed="true"] { translate: 0 -5px; scale: 1.08; z-index: 3; }
+.sticker:active { translate: 0 -1px; scale: 1.02; }
+.sticker:focus-visible { outline: 2px solid #80d0ff; outline-offset: 6px; border-radius: 2px; }
+
+.photo { width: clamp(62px, 6.4vw, 104px); top: -9%; left: -4%; }
+.receipt { width: clamp(40px, 3.7vw, 60px); top: 36%; left: -6%; }
+.ticket { width: clamp(36px, 3.4vw, 56px); top: 6%; right: -5%; }
+.key { width: clamp(44px, 4.1vw, 66px); bottom: -5%; left: 4%; }
+.flower { width: clamp(50px, 4.9vw, 80px); bottom: -7%; right: 11%; }
+
+.context {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  min-height: 20px;
+  margin: 22px 0 0;
+  color: #dfe2ff;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.contextMark { color: #fff; font-size: 16px; line-height: 1; }
+
+.title {
+  margin: 14px 0 0;
+  font-size: clamp(30px, 4.3vw, 56px);
+  font-weight: 700;
+  line-height: 1.03;
+  letter-spacing: -.05em;
+  text-wrap: balance;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 26px;
+  margin-top: 26px;
+  font-size: 14px;
+}
+
+.homeLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  min-height: 46px;
+  padding: 12px 22px;
+  border: 1px solid transparent;
+  border-radius: 100px;
+  background: #171717;
+  color: #fff;
+  transition: translate 200ms cubic-bezier(.2, .8, .2, 1), background-color 200ms ease;
+}
+
+.homeLink:hover { translate: 0 -2px; background: #252525; }
+.homeLink:active { translate: 0 0; background: #0e0e0e; }
+
+.blogLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 44px;
+  text-underline-offset: 5px;
+}
+
+.blogLink svg { transition: translate 200ms cubic-bezier(.2, .8, .2, 1); }
+.blogLink:hover { text-decoration: underline; }
+.blogLink:hover svg { translate: 3px 0; }
+.blogLink:active svg { translate: 0 0; }
+.actions a:focus-visible { outline: 2px solid #80d0ff; outline-offset: 5px; }
+
+@media (max-width: 900px) {
+  .photo { width: clamp(54px, 15vw, 80px); top: -8%; left: -3%; }
+  .receipt { display: none; }
+  .ticket { display: none; }
+  .key { width: clamp(38px, 11vw, 54px); bottom: -4%; left: 2%; }
+  .flower { width: clamp(44px, 13vw, 66px); bottom: -6%; right: 8%; }
+  .context { min-height: 36px; margin-top: 20px; font-size: 12px; }
+  .title { margin-top: 12px; font-size: clamp(30px, 8.4vw, 44px); }
+  .actions { gap: 12px 20px; margin-top: 24px; font-size: 13px; }
+  .homeLink { padding: 12px 18px; }
+}
+
+@media (max-width: 360px) {
+  .title { font-size: 29px; }
+  .actions { gap: 10px 16px; font-size: 12px; }
+  .homeLink { gap: 8px; padding-inline: 15px; }
+  .blogLink { gap: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker:hover, .sticker:focus-visible, .sticker[aria-pressed="true"], .sticker:active { translate: none; scale: none; }
+  .sticker[aria-pressed="true"] { outline: 2px dashed #80d0ff; outline-offset: 5px; }
+  .homeLink:hover, .homeLink:active, .blogLink:hover svg, .blogLink:active svg { translate: none; }
+}
