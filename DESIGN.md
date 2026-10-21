@@ -60,6 +60,25 @@ underneath.
   buttons with a polite live region that announces their saved context.
 - Native 404 routing, noindex metadata, no fake /404 route.
 
+## Sound control
+
+The site ships a synthesised interface sound (no audio files). It is now
+optional and remembered between visits:
+
+- `lib/ui-sound.ts` is the only place that creates an `AudioContext`, so the
+  mute is absolute: `playUiSound` returns early, queued cues are dropped, and
+  the shared context is suspended. Turning sound back on resumes it and plays
+  one confirmation blip.
+- The choice is stored in `localStorage` under `shelf-sound` and read once per
+  session on the client, so the server always renders the default and the page
+  never hydrates mismatched.
+- Desktop: a 24 px speaker button at the bottom of the cobalt pane, immediately
+  left of the hero dots.
+- Mobile: the same 24 px button next to the staggered menu button, so it is
+  reachable without opening the menu.
+- Only one control is ever visible: the corner button is `display: none` below
+  900 px and the header button is inside the desktop-hidden menu wrapper.
+
 ## Composition
 
 Desktop:
