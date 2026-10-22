@@ -27,22 +27,39 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: 'Shelf — Keep your context',
   description: 'A home for the things you mean to keep.',
+  applicationName: 'Shelf',
   icons: {
-    icon: '/svg/favicon.svg',
-    shortcut: '/svg/favicon.svg',
+    icon: [
+      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/shelf-icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/icons/favicon-32x32.png',
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
+    type: 'website',
+    siteName: 'Shelf',
+    title: 'Shelf — Keep your context',
+    description: 'A home for the things you mean to keep.',
+    url: '/',
     images: [
       {
-        url: 'https://bolt.new/static/og_default.png',
+        url: '/og/shelf-og.png',
+        width: 1200,
+        height: 630,
+        alt: 'Shelf — Keep your context',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
+    title: 'Shelf — Keep your context',
+    description: 'A home for the things you mean to keep.',
     images: [
       {
-        url: 'https://bolt.new/static/og_default.png',
+        url: '/og/shelf-og.png',
+        alt: 'Shelf — Keep your context',
       },
     ],
   },
