@@ -127,3 +127,8 @@ Create a Vercel project with **Root Directory** set to `cms`, add the env vars
 above, and deploy. Node 20.18+ is required. Run `npm run migrate` once against
 the production database (from your machine or a one-off job), then create the
 first admin at `/admin` or run `npm run seed`.
+
+The git-ignored `cms/.env.production` already contains the current production
+values and points at `https://shelf-e3aq.vercel.app` (CMS) and
+`https://shelf-seven-alpha.vercel.app` (site). Local `cms/.env.local` overrides
+those URLs and the local secret so `npm run start` stays local.

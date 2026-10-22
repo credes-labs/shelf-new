@@ -7,11 +7,27 @@ checks to run before calling it done.
 > **Current status:** the site and CMS are implemented and pass local QA. The
 > new Supabase project is `https://gcspqnjoyaokhirkgrfh.supabase.co`
 > (`ap-southeast-1`). Its URL and publishable key are wired into the site env,
-> all three waitlist migrations have been applied, and the Payload schema
-> migration has been applied. The CMS is running locally at
-> `http://localhost:3001/admin`; production still needs Vercel projects,
-> storage credentials, and the final domain/env values. Do not try to reuse the
-> old `twofxxgidvugywfmgvwa` project.
+> all three waitlist migrations have been applied, and the Payload schema plus
+> the S3 media migration have been applied. The CMS is running locally at
+> `http://localhost:3001/admin`; starter posts and covers are seeded, and media
+> is served from the public `shelf-media` bucket. Both Vercel projects exist at
+> `https://shelf-seven-alpha.vercel.app` (site) and
+> `https://shelf-e3aq.vercel.app` (CMS), and the production env files point at
+> those domains. Add the env values in Vercel and redeploy if not already done.
+> Do not try to reuse the old `twofxxgidvugywfmgvwa` project.
+
+### Ready-to-paste production env files
+
+These are local, git-ignored files with the live project values:
+
+| File | Use |
+|---|---|
+| `.env.production` | Site/Vercel production env |
+| `cms/.env.production` | CMS/Vercel production env (Root Directory = `cms`) |
+
+Both files already point at `https://shelf-seven-alpha.vercel.app` (site) and
+`https://shelf-e3aq.vercel.app` (CMS). Do not commit either file. For local
+`next start`, `cms/.env.local` overrides the local URLs/secrets.
 
 ---
 
@@ -22,7 +38,7 @@ checks to run before calling it done.
 | Marketing site + waitlist API | Vercel project, repo root | Public pages, `/api/waitlist`, blog UI |
 | Payload CMS | A second Vercel project, root directory `cms` | Editors write blog posts and upload media |
 | Supabase | One project | Postgres for both apps + public media bucket |
-| Domain/DNS | Registrar or Vercel DNS | `shelf.example.com` and `cms.shelf.example.com` |
+| Domain/DNS | Vercel | `shelf-seven-alpha.vercel.app` and `shelf-e3aq.vercel.app` |
 
 > **Hosting decision:** this runbook uses Vercel. The repo still contains a
 > `netlify.toml` from an earlier experiment; it is not part of the final
@@ -157,11 +173,11 @@ default Next.js build. Set these environment variables for Production:
 
 | Variable | Example | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | `https://shelf.example.com` | Canonical origin; also used in referral links |
+| `NEXT_PUBLIC_SITE_URL` | `https://shelf-seven-alpha.vercel.app` | Canonical origin; also used in referral links |
 | `SUPABASE_URL` | `https://<ref>.supabase.co` | Server-only |
 | `SUPABASE_ANON_KEY` | `<anon or publishable key>` | Server-only; preferred key for the waitlist RPC |
 | `SUPABASE_PUBLISHABLE_KEY` | `<publishable key>` | Alternative name for the same value |
-| `PAYLOAD_URL` | `https://cms.shelf.example.com` | Add after the CMS is deployed |
+| `PAYLOAD_URL` | `https://shelf-e3aq.vercel.app` | CMS origin (no `/admin`) |
 | `PAYLOAD_REVALIDATE_SECONDS` | `60` | Blog ISR fallback window |
 | `REVALIDATE_SECRET` | long random string | Must match the CMS |
 
@@ -182,7 +198,7 @@ server environment variables.
 Deploy, then verify:
 
 ```bash
-curl https://shelf.example.com/api/waitlist
+curl https://shelf-seven-alpha.vercel.app/api/waitlist
 # {"count":N}   (not null)
 ```
 
@@ -203,8 +219,8 @@ Set these Production environment variables:
 |---|---|---|
 | `DATABASE_URL` | `postgresql://postgres.<ref>:<password>@...pooler.supabase.com:5432/postgres` | Session pooler/direct; URL-encode special characters |
 | `PAYLOAD_SECRET` | `openssl rand -hex 32` | Required; keep secret |
-| `PAYLOAD_PUBLIC_SERVER_URL` | `https://cms.shelf.example.com` | Public CMS origin |
-| `SITE_URL` | `https://shelf.example.com` | Site origin for links and revalidation |
+| `PAYLOAD_PUBLIC_SERVER_URL` | `https://shelf-e3aq.vercel.app` | Public CMS origin (no `/admin`) |
+| `SITE_URL` | `https://shelf-seven-alpha.vercel.app` | Site origin for links and revalidation |
 | `REVALIDATE_SECRET` | same as site | Shared secret |
 | `PAYLOAD_SEED_EMAIL` | admin email | Optional, only for the first seed |
 | `PAYLOAD_SEED_PASSWORD` | strong password | Optional; remove after seeding |
@@ -242,10 +258,11 @@ will not be available to the Vercel deployment. Remove
 ### Deploy and connect
 
 1. Deploy the CMS.
-2. Open `https://cms.example.com/admin` and sign in.
-3. Put the CMS URL into the site's `PAYLOAD_URL` and redeploy the site.
-4. Put the site URL into the CMS's `SITE_URL` and redeploy the CMS if it changed.
+2. Open `https://shelf-e3aq.vercel.app/admin` and sign in.
+3. Confirm the site's `PAYLOAD_URL` is `https://shelf-e3aq.vercel.app` and redeploy the site.
+4. Confirm the CMS's `SITE_URL` is `https://shelf-seven-alpha.vercel.app` and redeploy the CMS if it changed.
 5. Confirm both projects use the same `REVALIDATE_SECRET`.
+6. The site's `/admin` route redirects to the CMS admin at `${PAYLOAD_URL}/admin`.
 
 The site falls back to its bundled articles if the CMS is unreachable. A
 reachable but empty CMS shows an empty blog; publish the seeded posts or new
