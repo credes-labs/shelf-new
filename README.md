@@ -206,9 +206,9 @@ The short version:
   production database once, then deploy.
 
 The git-ignored `.env.production` (site) and `cms/.env.production` (CMS) files
-already contain the current Supabase/S3 values. Replace the two example domains
-in each file once the Vercel domains are assigned, then copy the values into the
-Vercel projects.
+contain the current Supabase/S3 values and point at the live Vercel domains
+(`https://shelf-seven-alpha.vercel.app` and `https://shelf-e3aq.vercel.app`).
+Copy the values into the matching Vercel projects.
 
 Do not enable `PAYLOAD_DB_PUSH` on a shared or production database. Full steps,
 environment tables, and sign-off checks are in [`HANDOFF.md`](./HANDOFF.md).

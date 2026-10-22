@@ -129,6 +129,6 @@ the production database (from your machine or a one-off job), then create the
 first admin at `/admin` or run `npm run seed`.
 
 The git-ignored `cms/.env.production` already contains the current production
-values. Replace `https://shelf.example.com` and `https://cms.shelf.example.com`
-once the Vercel domains are assigned. Local `cms/.env.local` overrides those
-URLs and the local secret so `npm run start` stays local.
+values and points at `https://shelf-e3aq.vercel.app` (CMS) and
+`https://shelf-seven-alpha.vercel.app` (site). Local `cms/.env.local` overrides
+those URLs and the local secret so `npm run start` stays local.
