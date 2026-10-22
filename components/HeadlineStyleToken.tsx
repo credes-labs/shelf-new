@@ -3,10 +3,20 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './HeadlineStyleToken.module.css';
 
-const fonts = ['Georgia', 'Caveat', 'Instrument Serif', 'Space Grotesk', 'JetBrains Mono', 'Playfair Display', 'Inter'];
+const fonts = ['Georgia', 'Caveat', 'Instrument Serif', 'Playfair Display', 'Inter', 'JetBrains Mono'];
 const colors = ['#ffffff', '#171717', '#777777', '#ff6a3a', '#ffb52e', '#57ce83', '#6cc4ff', '#b17aff', '#ff75ab'];
 type Style = { font: string; bold: boolean; italic: boolean; color: string };
-const initial: Style = { font: 'Georgia', bold: false, italic: true, color: '#ffffff' };
+const initial: Style = { font: 'Playfair Display', bold: false, italic: true, color: '#ffffff' };
+const STORAGE_KEY = 'shelf-matters-style-v2';
+
+function familyFor(font: string) {
+  if (font === 'Playfair Display') return 'var(--font-serif), "Playfair Display", Georgia, serif';
+  if (font === 'Inter') return 'var(--font-inter), Inter, sans-serif';
+  if (font === 'Georgia') return 'Georgia, serif';
+  if (font === 'Instrument Serif') return '"Instrument Serif", Georgia, serif';
+  if (font === 'Caveat') return '"Caveat", cursive';
+  return `"${font}", monospace`;
+}
 
 export default function HeadlineStyleToken() {
   const [style, setStyle] = useState<Style>(initial);
@@ -20,7 +30,7 @@ export default function HeadlineStyleToken() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('shelf-matters-style');
+      const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<Style>;
         setStyle({ ...initial, ...parsed, font: fonts.includes(parsed.font ?? '') ? parsed.font! : initial.font, color: colors.includes(parsed.color ?? '') ? parsed.color! : initial.color });
@@ -31,7 +41,7 @@ export default function HeadlineStyleToken() {
 
   useEffect(() => {
     if (!hydrated.current) return;
-    try { localStorage.setItem('shelf-matters-style', JSON.stringify(style)); } catch { /* Storage may be disabled. */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(style)); } catch { /* Storage may be disabled. */ }
   }, [style]);
 
   useEffect(() => {
@@ -61,14 +71,14 @@ export default function HeadlineStyleToken() {
       aria-pressed={selected}
       onClick={() => { setIntroduced(true); setSelected(value => !value); setMenu(null); }}
       onKeyDown={keyDown}
-      style={{ fontFamily: style.font === 'Georgia' ? 'Georgia, serif' : `"${style.font}", ${style.font === 'Caveat' ? 'cursive' : 'sans-serif'}`, fontWeight: style.bold ? 700 : 400, fontStyle: style.italic ? 'italic' : 'normal', color: style.color }}
+      style={{ fontFamily: familyFor(style.font), fontWeight: style.bold ? 700 : 400, fontStyle: style.italic ? 'italic' : 'normal', color: style.color }}
     >matters.</span>
     <span className={`${styles.selection} ${selected || !introduced ? styles.visible : ''}`} aria-hidden="true"><i /><i /><i /><i /></span>
     <div className={`${styles.toolbar} ${selected ? styles.toolbarVisible : ''}`} role="toolbar" aria-label="Style matters" onPointerDown={event => event.preventDefault()}>
       <div className={styles.controlWrap}>
-        <button type="button" className={`${styles.fontButton} ${menu === 'font' ? styles.active : ''}`} aria-haspopup="listbox" aria-expanded={menu === 'font'} onClick={() => setMenu(menu === 'font' ? null : 'font')} style={{ fontFamily: style.font }}>{style.font}<span className={styles.chevron}>⌄</span></button>
+        <button type="button" className={`${styles.fontButton} ${menu === 'font' ? styles.active : ''}`} aria-haspopup="listbox" aria-expanded={menu === 'font'} onClick={() => setMenu(menu === 'font' ? null : 'font')} style={{ fontFamily: familyFor(style.font) }}>{style.font}<span className={styles.chevron}>⌄</span></button>
         {menu === 'font' && <div className={`${styles.popover} ${styles.fontList}`} role="listbox" aria-label="Font family">
-          {fonts.map(font => <button type="button" role="option" aria-selected={style.font === font} key={font} style={{ fontFamily: font === 'Georgia' ? 'Georgia,serif' : `"${font}", sans-serif` }} onClick={() => { setStyle(s => ({ ...s, font })); setMenu(null); }}>{font}</button>)}
+          {fonts.map(font => <button type="button" role="option" aria-selected={style.font === font} key={font} style={{ fontFamily: familyFor(font) }} onClick={() => { setStyle(s => ({ ...s, font })); setMenu(null); }}>{font}</button>)}
         </div>}
       </div>
       <span className={styles.divider} />

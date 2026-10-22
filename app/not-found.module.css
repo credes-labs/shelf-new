@@ -48,7 +48,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: #2430bc url('/right_visual.jpg') center / cover;
+  background: #518400 url('/right_visual.jpg') center / cover;
   background-blend-mode: lighten;
 }
 

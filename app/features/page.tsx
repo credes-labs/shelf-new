@@ -5,7 +5,11 @@ export const metadata = { title: 'Features · Shelf', description: 'Capture free
 
 export default function FeaturesPage() {
   return (
-    <ContentPage className="features-content">
+    <ContentPage
+      className="features-content"
+      visual="/right_visual_features.jpg"
+      visualAlt="Shelf features visual: staying organized while the office burns"
+    >
       <p className="page-eyebrow">Features</p>
       <h1>Keep it. Find it. Use it.</h1>
       <p className="page-lead">Shelf is a scrapbook for your digital life — capture freely, organize lightly, and pull the right context when you need it.</p>
@@ -33,7 +37,7 @@ export default function FeaturesPage() {
       <section className="content-section">
         <h2>Coming with early access</h2>
         <p>Native experiences for iOS, web, and Mac are on the way. Join the waitlist to get notified when your platform opens up.</p>
-        <WaitlistSignup id="features-waitlist" className="content-waitlist" />
+        <WaitlistSignup id="features-waitlist" className="content-waitlist" variant="content" />
       </section>
     </ContentPage>
   );

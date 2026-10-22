@@ -7,7 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cms:install": "npm --prefix cms install",
+    "cms:dev": "npm --prefix cms run dev",
+    "cms:build": "npm --prefix cms run build",
+    "cms:start": "npm --prefix cms run start",
+    "cms:seed": "npm --prefix cms run seed",
+    "cms:seed:force": "npm --prefix cms run seed:force",
+    "cms:migrate": "npm --prefix cms run migrate",
+    "cms:types": "npm --prefix cms run generate:types"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

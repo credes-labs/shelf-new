@@ -20,6 +20,12 @@
 # Local deployments
 /.vercel/
 
+# Payload CMS (its own Next app and node_modules)
+/cms/node_modules/
+/cms/.next/
+/cms/media/
+/cms/*.db
+
 # Agent / tooling workspaces (local-only, never commit)
 /.claude/
 /.next-codex-verify-*/

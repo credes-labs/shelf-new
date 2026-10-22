@@ -1,12 +1,30 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Space_Grotesk } from 'next/font/google';
+import localFont from 'next/font/local';
 import UiSoundManager from '../components/UiSoundManager';
 import SoundToggle from '../components/SoundToggle';
+import ReferralCapture from '../components/ReferralCapture';
 
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
+const inter = localFont({
+  src: './fonts/Inter-latin.woff2',
+  variable: '--font-inter',
+  display: 'swap',
+  weight: '100 900',
+  style: 'normal',
+});
+const playfair = localFont({
+  src: [
+    { path: './fonts/PlayfairDisplay-Normal-latin.woff2', weight: '400 900', style: 'normal' },
+    { path: './fonts/PlayfairDisplay-Italic-latin.woff2', weight: '400 900', style: 'italic' },
+  ],
+  variable: '--font-serif',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
+  // Absolute origin for canonical URLs and social images. Set NEXT_PUBLIC_SITE_URL
+  // in production (e.g. https://shelf.example).
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: 'Shelf — Keep your context',
   description: 'A home for the things you mean to keep.',
   icons: {
@@ -37,7 +55,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={spaceGrotesk.className}><UiSoundManager />{children}<SoundToggle variant="corner" /></body>
+      <body className={`${inter.variable} ${playfair.variable}`}><UiSoundManager /><ReferralCapture />{children}<SoundToggle variant="corner" /></body>
     </html>
   );
 }

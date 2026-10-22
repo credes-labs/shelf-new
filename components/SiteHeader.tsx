@@ -28,13 +28,13 @@ export default function SiteHeader({ className = '' }: { className?: string }) {
         className="site-mobile-menu"
         position="right"
         items={menuItems}
-        colors={['#6972e3', '#2430bc']}
+        colors={['#7aab36', '#518400']}
         displaySocials={false}
         displayItemNumbering
         showSoundToggle
         menuButtonColor="#fff"
         openMenuButtonColor="#171717"
-        accentColor="#2430bc"
+        accentColor="#518400"
       />
     </header>
   );
