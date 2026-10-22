@@ -6,7 +6,11 @@ export const metadata = { title: 'About Shelf', description: 'The thinking behin
 
 export default function AboutPage() {
   return (
-    <ContentPage className="about-content">
+    <ContentPage
+      className="about-content"
+      visual="/right_visual_about.jpg"
+      visualAlt="Shelf about visual: taking a break above a corporate drop ceiling"
+    >
       <p className="page-eyebrow">About</p>
       <h1>Context that stays with you</h1>
       <p className="page-lead">Shelf is for the half-finished thoughts, saved tabs, screenshots, and quiet ideas you don’t want to lose — organized the way you actually think.</p>

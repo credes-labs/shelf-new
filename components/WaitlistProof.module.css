@@ -13,7 +13,7 @@
   line-height: 1.25;
 }
 .root[data-tone='light'] { --ring: #fff; --text: #777; --tip-bg: #171717; --tip-fg: #fff; }
-.root[data-tone='dark'] { --ring: var(--blue, #303bc7); --text: rgba(255,255,255,.78); --tip-bg: #fff; --tip-fg: #171717; }
+.root[data-tone='dark'] { --ring: var(--blue, #518400); --text: rgba(255,255,255,.78); --tip-bg: #fff; --tip-fg: #171717; }
 .stack { display: flex; align-items: center; margin: 0; padding: 0; list-style: none; }
 .item {
   position: relative;

@@ -7,6 +7,9 @@ import SoundToggle from '../components/SoundToggle';
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  // Absolute origin for canonical URLs and social images. Set NEXT_PUBLIC_SITE_URL
+  // in production (e.g. https://shelf.example).
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: 'Shelf — Keep your context',
   description: 'A home for the things you mean to keep.',
   icons: {

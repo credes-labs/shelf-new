@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { playUiSound, ensureAudioUnlocked } from '../lib/ui-sound';
 import WaitlistProof from './WaitlistProof';
+import BookDemoButton from './BookDemoButton';
 import type { PeelDef } from './ModalPeels';
 import modal from './WaitlistModal.module.css';
 
@@ -55,6 +56,11 @@ export default function WaitlistSignup({ id, className = '', hideProofLabel = fa
   const [status, setStatus] = useState<Status>('idle');
   const [joined, setJoined] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [serverCount, setServerCount] = useState<number | null>(null);
+  // Hidden from people, tempting to bots. Sent with the form; the API ignores
+  // any submission that fills it in.
+  const [company, setCompany] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setMounted(true), []);
@@ -101,24 +107,59 @@ export default function WaitlistSignup({ id, className = '', hideProofLabel = fa
   function closeModal() {
     playUiSound('close');
     setModalOpen(false);
-    if (status === 'error') setStatus('idle');
+    if (status === 'error') {
+      setStatus('idle');
+      setError(null);
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // Mock mode: no requests yet. A completed form goes straight to the card.
     // Prime the audio context inside the tap gesture so the celebration plays.
     ensureAudioUnlocked();
     setStatus('loading');
     setNotice(null);
+    setError(null);
     playUiSound('click');
-    window.setTimeout(() => {
+
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          country,
+          phone: phone ? `${dial} ${phone}`.trim() : '',
+          notify,
+          company,
+          source: window.location.pathname,
+          referrer: document.referrer,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { success?: boolean; count?: number | null; error?: string; alreadyJoined?: boolean }
+        | null;
+
+      if (!response.ok || !result?.success) {
+        setError(result?.error ?? 'Something went wrong. Please check your details and try again.');
+        setStatus('error');
+        playUiSound('error');
+        return;
+      }
+
+      if (typeof result.count === 'number') setServerCount(result.count);
       setJoined(true);
       setStatus('success');
       playUiSound('success');
       // Celebrate again as the card lands.
       window.setTimeout(() => playUiSound('success'), 450);
-    }, 450);
+    } catch {
+      setError('Could not reach the waitlist. Check your connection and try again.');
+      setStatus('error');
+      playUiSound('error');
+    }
   }
 
   const dial = COUNTRIES.find((c) => c.code === country)?.dial ?? '+91';
@@ -177,16 +218,20 @@ export default function WaitlistSignup({ id, className = '', hideProofLabel = fa
           You’re on the list. Check your inbox.
         </p>
       ) : (
-        <button
-          className="waitlist-trigger"
-          type="button"
-          onClick={openModal}
+        <BookDemoButton
+          href="#waitlist"
+          size={20}
+          role="button"
           aria-haspopup="dialog"
+          onClick={(event) => {
+            event.preventDefault();
+            openModal();
+          }}
         >
-          <Image src="/svg/join%20waitlist.svg" alt="Join waitlist" width={172} height={70} unoptimized />
-        </button>
+          Join waitlist
+        </BookDemoButton>
       )}
-      <WaitlistProof joined={joined} hideLabel={hideProofLabel} hideFaces={hideFaces} className="waitlist-proof" />
+      <WaitlistProof joined={joined} count={serverCount ?? undefined} hideLabel={hideProofLabel} hideFaces={hideFaces} className="waitlist-proof" />
 
       {mounted && modalOpen && createPortal(
         <div className={modal.backdrop} onClick={closeModal}>
@@ -243,6 +288,17 @@ export default function WaitlistSignup({ id, className = '', hideProofLabel = fa
                   </h2>
 
                   <div className={modal.fields}>
+                    <input
+                      className={modal.honeypot}
+                      type="text"
+                      name="company"
+                      value={company}
+                      onChange={(event) => setCompany(event.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                    />
+
                     <label className={modal.label}>
                       Name<span className={modal.required} aria-hidden="true">*</span>
                       <input
@@ -318,7 +374,7 @@ export default function WaitlistSignup({ id, className = '', hideProofLabel = fa
 
                     {status === 'error' && (
                       <p className={modal.error} role="alert">
-                        Something went wrong. Please check your details and try again.
+                        {error ?? 'Something went wrong. Please check your details and try again.'}
                       </p>
                     )}
 

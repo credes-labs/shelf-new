@@ -88,6 +88,17 @@
 
 .fields { display: grid; gap: 10px; margin-top: 14px; }
 
+/* Bot trap: present in the DOM, invisible and unreachable for people. */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .label { display: grid; gap: 6px; font-size: 12.5px; font-weight: 600; }
 .label small { font-weight: 400; }
 .required { color: #ff8a7a; }
