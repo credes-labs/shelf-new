@@ -27,7 +27,7 @@ Required values:
 
 | Variable | Notes |
 |---|---|
-| `DATABASE_URL` | Supabase → Project Settings → Database → connection string |
+| `DATABASE_URL` | Supabase → Project Settings → Database → **Session pooler** string (port 5432, user `postgres.<ref>`) |
 | `PAYLOAD_SECRET` | Long random string (`openssl rand -hex 32`) |
 | `PAYLOAD_PUBLIC_SERVER_URL` | `http://localhost:3001` locally, the CMS URL in production |
 | `SITE_URL` | Where the site runs; used for links and cache revalidation |

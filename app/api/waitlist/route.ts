@@ -6,13 +6,17 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/+$/, '')
-// Server-only anon key first: it is least-privilege (the RPC is SECURITY
-// DEFINER) and cannot be replaced by the NEXT_PUBLIC_* value at build time.
+// Supabase now labels the anon key as a "publishable key". Accept both names
+// so existing projects and newly-created projects can use the same route.
+// Server-only values first: they are least-privilege (the RPC is SECURITY
+// DEFINER) and cannot be replaced by a NEXT_PUBLIC_* value at build time.
 // The service-role key remains a fallback for older deployments.
 const WRITE_KEY =
   process.env.SUPABASE_ANON_KEY ??
+  process.env.SUPABASE_PUBLISHABLE_KEY ??
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   ''
 
 const RATE_LIMIT = 6

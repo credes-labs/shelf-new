@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { gsap } from 'gsap';
-import PixelMaze from './PixelMaze';
+import RetroComputer from './RetroComputer';
 import styles from './LostPageStage.module.css';
 
 const stickers = [
@@ -24,7 +24,7 @@ function Arrow({ back = false }: { back?: boolean }) {
   );
 }
 
-/** The 404 stage: the maze illustration, the stickers around it, the line and the way home. */
+/** The 404 stage: the retro computer, the stickers around it, the line and the way home. */
 export default function LostPageStage() {
   const [selected, setSelected] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export default function LostPageStage() {
   return (
     <div className={styles.stage} ref={root}>
       <div className={styles.visual}>
-        <PixelMaze />
+        <RetroComputer />
         <div className={styles.stickers}>
           {stickers.map(sticker => (
             <button

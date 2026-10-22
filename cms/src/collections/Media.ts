@@ -15,9 +15,6 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const staticDir = process.env.MEDIA_DIR || path.resolve(dirname, '../../media')
 if (!process.env.S3_BUCKET) fs.mkdirSync(staticDir, { recursive: true })
 
-/** Public base for Supabase Storage, e.g. https://<ref>.supabase.co/storage/v1/object/public/shelf-media */
-const publicMediaBase = (process.env.SUPABASE_PUBLIC_MEDIA_URL || '').replace(/\/+$/, '')
-
 export const Media: CollectionConfig = {
   slug: 'media',
   labels: { singular: 'Image', plural: 'Media' },
@@ -42,11 +39,6 @@ export const Media: CollectionConfig = {
       { name: 'hero', width: 1600, withoutEnlargement: true },
     ],
     adminThumbnail: 'thumbnail',
-    ...(publicMediaBase
-      ? {
-          generateFileURL: ({ filename }: { filename: string }) => `${publicMediaBase}/${filename}`,
-        }
-      : {}),
   },
   fields: [
     {

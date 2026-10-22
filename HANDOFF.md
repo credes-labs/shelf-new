@@ -5,9 +5,13 @@ covers the marketing site, the Payload CMS, Supabase, and the production
 checks to run before calling it done.
 
 > **Current status:** the site and CMS are implemented and pass local QA. The
-> previous Supabase project (`twofxxgidvugywfmgvwa.supabase.co`) is no longer
-> reachable, so production still needs a **new Supabase project** and the
-> migrations applied to it. Do not try to reuse the old project ref.
+> new Supabase project is `https://gcspqnjoyaokhirkgrfh.supabase.co`
+> (`ap-southeast-1`). Its URL and publishable key are wired into the site env,
+> all three waitlist migrations have been applied, and the Payload schema
+> migration has been applied. The CMS is running locally at
+> `http://localhost:3001/admin`; production still needs Vercel projects,
+> storage credentials, and the final domain/env values. Do not try to reuse the
+> old `twofxxgidvugywfmgvwa` project.
 
 ---
 
@@ -89,21 +93,30 @@ only admin account.
 
 ---
 
-## 3. Create the new Supabase project
+## 3. Supabase project and database
+
+The project for this build is `gcspqnjoyaokhirkgrfh` in `ap-southeast-1`, and
+both the waitlist and Payload schemas have already been created there. Use the
+steps below if you need to recreate the project or set up a second environment.
 
 1. In Supabase, create a project in the region closest to the audience.
 2. Save the database password in the team password manager.
 3. From **Project Settings -> API**, record:
    - Project URL
-   - `anon` public key
+   - `anon` public key, or the newer **publishable key** (`sb_publishable_...`)
    - `service_role` key (optional; keep it server-only)
 4. From **Project Settings -> Database**, copy the **session pooler**
    connection string (port `5432`). Use this for Payload. Avoid the transaction
    pooler (port `6543`) for migrations and the CMS.
+   For `gcspqnjoyaokhirkgrfh`, the working host is
+   `aws-0-ap-southeast-1.pooler.supabase.com` with user
+   `postgres.gcspqnjoyaokhirkgrfh`. The direct `db.<ref>.supabase.co` host is
+   IPv6-only on some networks; the session pooler is IPv4 and is what this
+   project uses.
 
-The anon key is safe to ship to a server, but it should still be handled as a
-server-only value on Vercel. The service-role key bypasses row-level security
-and must never be exposed to a browser or committed.
+The anon/publishable key is safe to ship to a server, but it should still be
+handled as a server-only value on Vercel. The service-role key bypasses
+row-level security and must never be exposed to a browser or committed.
 
 ### Apply the waitlist migrations
 
@@ -146,7 +159,8 @@ default Next.js build. Set these environment variables for Production:
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://shelf.example.com` | Canonical origin; also used in referral links |
 | `SUPABASE_URL` | `https://<ref>.supabase.co` | Server-only |
-| `SUPABASE_ANON_KEY` | `<anon key>` | Server-only; preferred key for the waitlist RPC |
+| `SUPABASE_ANON_KEY` | `<anon or publishable key>` | Server-only; preferred key for the waitlist RPC |
+| `SUPABASE_PUBLISHABLE_KEY` | `<publishable key>` | Alternative name for the same value |
 | `PAYLOAD_URL` | `https://cms.shelf.example.com` | Add after the CMS is deployed |
 | `PAYLOAD_REVALIDATE_SECONDS` | `60` | Blog ISR fallback window |
 | `REVALIDATE_SECRET` | long random string | Must match the CMS |
@@ -156,9 +170,9 @@ Optional:
 - `SUPABASE_SERVICE_ROLE_KEY` — only if a server-side task needs to bypass RLS.
   Do not add it unless there is a concrete reason; the waitlist works with the
   anon key through `waitlist_join`.
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — only needed if
-  a browser-side Supabase client is added later. The current site does not use
-  them.
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` /
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — only needed if a browser-side
+  Supabase client is added later. The current site does not use them.
 
 The API route deliberately prefers `SUPABASE_ANON_KEY` over the public
 `NEXT_PUBLIC_*` value. This avoids the Next build-time inlining problem where a
@@ -201,6 +215,8 @@ the source of truth.
 
 ### Apply Payload migrations
 
+The initial Payload migration has already been applied to the current
+`gcspqnjoyaokhirkgrfh` project. Run this on a fresh database or new environment.
 From a machine with the production `DATABASE_URL` in `cms/.env`:
 
 ```bash
