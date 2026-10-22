@@ -37,7 +37,7 @@ export default function FeaturesPage() {
       <section className="content-section">
         <h2>Coming with early access</h2>
         <p>Native experiences for iOS, web, and Mac are on the way. Join the waitlist to get notified when your platform opens up.</p>
-        <WaitlistSignup id="features-waitlist" className="content-waitlist" />
+        <WaitlistSignup id="features-waitlist" className="content-waitlist" variant="content" />
       </section>
     </ContentPage>
   );

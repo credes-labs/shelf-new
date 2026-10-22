@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import UiSoundManager from '../components/UiSoundManager';
 import SoundToggle from '../components/SoundToggle';
+import ReferralCapture from '../components/ReferralCapture';
 
 const inter = localFont({
   src: './fonts/Inter-latin.woff2',
@@ -54,7 +55,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable}`}><UiSoundManager />{children}<SoundToggle variant="corner" /></body>
+      <body className={`${inter.variable} ${playfair.variable}`}><UiSoundManager /><ReferralCapture />{children}<SoundToggle variant="corner" /></body>
     </html>
   );
 }

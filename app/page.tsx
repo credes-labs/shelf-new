@@ -15,29 +15,33 @@ const BrickFooter = dynamic(() => import('../components/BrickFooter'));
 type HeroSticker = { file: string; name: string };
 type StickerScene = { behind: HeroSticker[]; front: HeroSticker[] };
 
+// Keep each screen/headline legible for most of its scroll segment, then hand
+// off quickly. A full-segment crossfade means the phone is only sharp at one
+// exact scroll position; this leaves a short transition at the end instead.
+const FAST_TRANSITION_START = 0.78;
+
 function PhoneScreens({ progress, screenImages, mobile = false }: { progress: number; screenImages: string[]; mobile?: boolean }) {
   const current = Math.min(screenImages.length - 1, Math.floor(progress));
-  const phase = current === screenImages.length - 1 ? 0 : progress - current;
-  const eased = phase * phase * (3 - 2 * phase);
+  const local = progress - Math.floor(progress);
+  const raw = Math.max(0, Math.min(1, (local - FAST_TRANSITION_START) / (1 - FAST_TRANSITION_START)));
+  const eased = raw * raw * (3 - 2 * raw);
   const screenClass = mobile ? 'mobile-story-phone' : 'phone-svg';
 
   return <>
     <div className="phone-screen-window" aria-hidden="true">
       {screenImages.map((src, index) => {
         const opacity = index === current
-          ? 1 - eased
+          ? 1 - (current === screenImages.length - 1 ? 0 : eased)
           : index === current + 1
             ? eased
             : index === screenImages.length - 1 && progress >= screenImages.length - 1
               ? 1
               : 0;
-        const distance = Math.min(1, Math.abs(index - progress));
-        // Preserve the original scroll-linked screen glide and blur. The two
-        // screens overlap during the handoff, then settle sharply at each stop.
+        // Blur only during the short handoff, never for the whole segment.
         // Mobile keeps the glide but drops the blur.
-        const blur = mobile ? 0 : Math.sin(distance * Math.PI) * 7;
+        const blur = mobile ? 0 : Math.sin(eased * Math.PI) * 4.5;
         const y = (index - progress) * 11;
-        const brightness = 1 - Math.sin(distance * Math.PI) * 0.025;
+        const brightness = 1 - Math.sin(eased * Math.PI) * 0.025;
         return <img
           key={src}
           className={screenClass}
@@ -326,14 +330,16 @@ export default function Home() {
 
   const screenImages = ['/svg/iphone%20screen%201.svg', '/svg/iphone%20screen%202.svg', '/svg/iphone%20screen%203.svg'];
   const transition = scrollProgress - Math.floor(scrollProgress);
-  const easedTransition = transition * transition * (3 - 2 * transition);
+  const transitionRaw = Math.max(0, Math.min(1, (transition - FAST_TRANSITION_START) / (1 - FAST_TRANSITION_START)));
+  const easedTransition = transitionRaw * transitionRaw * (3 - 2 * transitionRaw);
+  const headlineBlur = Math.sin(easedTransition * Math.PI) * 4.5;
   const weights = screenImages.map((_, index) => {
     const from = Math.min(2, Math.floor(scrollProgress));
     if (index === from) return 1 - easedTransition;
     if (index === from + 1) return easedTransition;
     return index === 2 && scrollProgress >= 2 ? 1 : 0;
   });
-  const activeHeadline = Math.min(2, Math.round(scrollProgress));
+  const activeHeadline = Math.min(2, Math.floor(scrollProgress) + (easedTransition >= 0.5 ? 1 : 0));
   const activeDot = Math.min(3, Math.round(scrollProgress * 1.5));
   const dotColors = ['#ffffff', '#ffdb3a', '#ff8f70', '#9ce0ff'];
   const scrollToDot = (index: number) => {
@@ -378,13 +384,14 @@ export default function Home() {
             </div>
 
             <div className="hero-copy">
+              <WaitlistSignup id="home-waitlist-desktop" className="waitlist-inline hero-waitlist">
               <DataTypeIcons />
               <div className="hero-copy-slides">
-                <h1 id="hero-title" className="hero-copy-slide" aria-hidden={activeHeadline !== 0} style={{ opacity: weights[0], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress))) * 7}px)`, transform: `translate3d(0, ${-scrollProgress * 10}px, 0)`, pointerEvents: weights[0] > 0.8 ? 'auto' : 'none' }}>Keep your<br />context.<br />Find it<br />when it<br /><HeadlineStyleToken /></h1>
-                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 1} style={{ opacity: weights[1], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 1))) * 7}px)`, transform: `translate3d(0, ${(1 - scrollProgress) * 10}px, 0)`, pointerEvents: weights[1] > 0.8 ? 'auto' : 'none' }}>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>
-                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 2} style={{ opacity: weights[2], filter: `blur(${Math.sin(Math.PI * Math.min(1, Math.abs(scrollProgress - 2))) * 7}px)`, transform: `translate3d(0, ${(2 - scrollProgress) * 10}px, 0)`, pointerEvents: weights[2] > 0.8 ? 'auto' : 'none' }}>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>
+                <h1 id="hero-title" className="hero-copy-slide" aria-hidden={activeHeadline !== 0} style={{ opacity: weights[0], filter: `blur(${headlineBlur.toFixed(2)}px)`, transform: `translate3d(0, ${-scrollProgress * 10}px, 0)`, pointerEvents: weights[0] > 0.8 ? 'auto' : 'none' }}>Keep your<br />context.<br />Find it<br />when it<br /><HeadlineStyleToken /></h1>
+                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 1} style={{ opacity: weights[1], filter: `blur(${headlineBlur.toFixed(2)}px)`, transform: `translate3d(0, ${(1 - scrollProgress) * 10}px, 0)`, pointerEvents: weights[1] > 0.8 ? 'auto' : 'none' }}>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>
+                <h1 className="hero-copy-slide" aria-hidden={activeHeadline !== 2} style={{ opacity: weights[2], filter: `blur(${headlineBlur.toFixed(2)}px)`, transform: `translate3d(0, ${(2 - scrollProgress) * 10}px, 0)`, pointerEvents: weights[2] > 0.8 ? 'auto' : 'none' }}>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>
               </div>
-              <WaitlistSignup id="home-waitlist-desktop" className="waitlist-inline" />
+              </WaitlistSignup>
             </div>
           </div>
           {renderDots('hero-dots-desktop')}
@@ -409,12 +416,18 @@ export default function Home() {
               </div>
             </div>
             <div className="mobile-story-copy">
-              {index === 0 && <h1>Keep your<br />context.<br />Find it<br />when it<br /><HeadlineStyleToken /></h1>}
-              {index === 0 && <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" hideProofLabel hideFaces />}
+              {index === 0 && (
+                <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" hideProofLabel hideFaces>
+                  <h1>Keep your<br />context.<br />Find it<br />when it<br /><HeadlineStyleToken /></h1>
+                </WaitlistSignup>
+              )}
               {index === 1 && <h1>Save the things<br />that matter.<br />Find them when<br />you need them.</h1>}
               {index === 1 && <DataTypeIcons className="dt-row-mobile" />}
-              {index === 2 && <h1>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>}
-              {index === 2 && <WaitlistSignup id="home-waitlist-mobile" className="waitlist-inline mobile-waitlist" hideProofLabel />}
+              {index === 2 && (
+                <WaitlistSignup id="home-waitlist-mobile" className="waitlist-inline mobile-waitlist" hideProofLabel>
+                  <h1>Your digital life,<br />all together.<br />Ready whenever<br />you need it.</h1>
+                </WaitlistSignup>
+              )}
             </div>
           </section>)}
         </div>

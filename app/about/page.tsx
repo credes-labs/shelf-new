@@ -29,7 +29,7 @@ export default function AboutPage() {
       <section className="content-section">
         <h2>Where we are</h2>
         <p>We’re in early access. Join the waitlist to be first in line when Shelf opens up on iOS, web, and Mac.</p>
-        <WaitlistSignup id="about-waitlist" className="content-waitlist" />
+        <WaitlistSignup id="about-waitlist" className="content-waitlist" variant="content" />
       </section>
       <FooterLinks />
     </ContentPage>

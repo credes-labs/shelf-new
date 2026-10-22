@@ -1,395 +1,252 @@
 'use client';
 
-import { FormEvent, Suspense, lazy, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { playUiSound, ensureAudioUnlocked } from '../lib/ui-sound';
-import WaitlistProof from './WaitlistProof';
 import BookDemoButton from './BookDemoButton';
-import type { PeelDef } from './ModalPeels';
-import modal from './WaitlistModal.module.css';
-
-// Peel + drag code only downloads when the popup opens, never on page load.
-const ModalPeels = lazy(() => import('./ModalPeels'));
-
-type Status = 'idle' | 'loading' | 'success' | 'error';
+import WaitlistProof from './WaitlistProof';
+import WaitlistForm from './WaitlistForm';
+import { ShareCardModal } from './waitlist/ShareCard';
+import {
+  captureReferralFromUrl,
+  readWaitlistState,
+  saveWaitlistState,
+  type SavedWaitlist,
+  type WaitlistSuccess,
+} from '../lib/waitlist-client';
+import { playUiSound } from '../lib/ui-sound';
+import styles from './WaitlistSignup.module.css';
 
 // The most recently claimed external open request (menu entry). Module scope
-// so every mounted instance sees it and only the first one opens its popup.
+// so every mounted instance sees it and only the first visible one opens.
 let claimedWaitlistEvent = 0;
 
-const COUNTRIES = [
-  { code: 'IN', name: 'India', dial: '+91' },
-  { code: 'US', name: 'United States', dial: '+1' },
-  { code: 'GB', name: 'United Kingdom', dial: '+44' },
-  { code: 'AE', name: 'UAE', dial: '+971' },
-  { code: 'SG', name: 'Singapore', dial: '+65' },
-  { code: 'AU', name: 'Australia', dial: '+61' },
-  { code: 'DE', name: 'Germany', dial: '+49' },
-  { code: 'BR', name: 'Brazil', dial: '+55' },
-];
+type Props = {
+  id: string;
+  className?: string;
+  hideProofLabel?: boolean;
+  hideFaces?: boolean;
+  variant?: 'hero' | 'content';
+  children?: ReactNode;
+};
 
-/** Peelable stickers floating on the popup (file + placement + variation). */
-const PEELS: PeelDef[] = [
-  { file: 'smile sticker.svg', place: 'f0', width: 102, rotate: 12, peelDirection: 0, hover: 28, active: 44 },
-  { file: 'polaroid.svg', place: 'f1', width: 88, rotate: -9, peelDirection: 90, hover: 32, active: 48 },
-  { file: 'red CD.svg', place: 'f2', width: 112, rotate: 16, peelDirection: 180, hover: 24, active: 40 },
-  { file: 'key.svg', place: 'f3', width: 75, rotate: -18, peelDirection: 270, hover: 30, active: 46 },
-  { file: 'piggybank.svg', place: 'f4', width: 95, rotate: -7, peelDirection: 90, hover: 26, active: 42 },
-  { file: 'coin.svg', place: 'f5', width: 78, rotate: 14, peelDirection: 180, hover: 32, active: 50 },
-  { file: 'umbrella.svg', place: 'f6', width: 90, rotate: -12, peelDirection: 0, hover: 28, active: 44 },
-  { file: 'blue flower.svg', place: 'f7', width: 77, rotate: 20, peelDirection: 270, hover: 24, active: 40 },
-  { file: 'wallet.svg', place: 'f8', width: 87, rotate: 8, peelDirection: 90, hover: 30, active: 46 },
-  { file: 'cassete.svg', place: 'f9', width: 105, rotate: -11, peelDirection: 180, hover: 26, active: 42 },
-  { file: 'matcha.svg', place: 'f10', width: 78, rotate: -16, peelDirection: 0, hover: 32, active: 48 },
-  { file: 'controller.svg', place: 'f11', width: 94, rotate: 10, peelDirection: 270, hover: 28, active: 44 },
-];
-
-export default function WaitlistSignup({ id, className = '', hideProofLabel = false, hideFaces = false }: { id: string; className?: string; hideProofLabel?: boolean; hideFaces?: boolean }) {
-  const [modalOpen, setModalOpen] = useState(false);
+export default function WaitlistSignup({
+  id,
+  className = '',
+  hideProofLabel = false,
+  hideFaces = false,
+  variant = 'hero',
+  children,
+}: Props) {
+  const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
+  const [joined, setJoined] = useState<SavedWaitlist | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [country, setCountry] = useState(COUNTRIES[0].code);
-  const [phone, setPhone] = useState('');
-  const [notify, setNotify] = useState(false);
-  const [status, setStatus] = useState<Status>('idle');
-  const [joined, setJoined] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [serverCount, setServerCount] = useState<number | null>(null);
-  // Hidden from people, tempting to bots. Sent with the form; the API ignores
-  // any submission that fills it in.
-  const [company, setCompany] = useState('');
-  const nameRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number | null>(null);
+  // The panel stays mounted while it animates out, so closing is not a hard cut.
+  const active = open || closing;
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+  }, []);
 
-  // Opened from anywhere (e.g. the staggered menu entry). The first mounted
-  // instance claims the event so only one popup opens.
+  useEffect(() => {
+    setMounted(true);
+    captureReferralFromUrl();
+    setJoined(readWaitlistState());
+  }, []);
+
+  // Keep the copy out of the tab order while the form owns the space.
+  useEffect(() => {
+    const copy = copyRef.current;
+    if (!copy) return;
+    if (active) {
+      copy.setAttribute('inert', '');
+      copy.setAttribute('aria-hidden', 'true');
+    } else {
+      copy.removeAttribute('inert');
+      copy.removeAttribute('aria-hidden');
+    }
+  }, [active]);
+
+  // On phones the copy block becomes a fixed, scrollable sheet under the nav.
+  // The class lives on the story step so the fixed sheet can cover the artwork
+  // and the body cannot scroll behind it.
+  useEffect(() => {
+    if (variant !== 'hero') return;
+    const step = rootRef.current?.closest<HTMLElement>('.mobile-story-step');
+    if (!step) return;
+
+    const previousOverflow = document.body.style.overflow;
+    step.classList.toggle('waitlist-open', active);
+    if (active) document.body.style.overflow = 'hidden';
+
+    return () => {
+      step.classList.remove('waitlist-open');
+      if (active) document.body.style.overflow = previousOverflow;
+    };
+  }, [active, variant]);
+
   useEffect(() => {
     const onExternalOpen = (event: Event) => {
       const eventId = (event as CustomEvent<{ id?: number }>).detail?.id ?? 0;
       if (eventId && claimedWaitlistEvent === eventId) return;
+
+      const root = rootRef.current;
+      // Hidden copies (desktop vs. mobile) must not claim the request.
+      if (!root || root.getClientRects().length === 0) return;
+      if (open || cardOpen || closing) return;
+
       claimedWaitlistEvent = eventId;
-      if (status === 'success' || modalOpen) return;
       playUiSound('waitlist');
-      setModalOpen(true);
-    };
-    window.addEventListener('shelf:open-waitlist', onExternalOpen);
-    return () => window.removeEventListener('shelf:open-waitlist', onExternalOpen);
-  }, [status, modalOpen]);
 
-  // Lock background scroll + close on Escape while the popup is open.
-  useEffect(() => {
-    if (!modalOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setModalOpen(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    // Focus the name field once the popup paints.
-    const timer = window.setTimeout(() => nameRef.current?.focus(), 60);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', onKeyDown);
-      window.clearTimeout(timer);
-    };
-  }, [modalOpen]);
-
-  function openModal() {
-    if (status === 'success') return;
-    playUiSound('waitlist');
-    setModalOpen(true);
-  }
-
-  function closeModal() {
-    playUiSound('close');
-    setModalOpen(false);
-    if (status === 'error') {
-      setStatus('idle');
-      setError(null);
-    }
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    // Prime the audio context inside the tap gesture so the celebration plays.
-    ensureAudioUnlocked();
-    setStatus('loading');
-    setNotice(null);
-    setError(null);
-    playUiSound('click');
-
-    try {
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          country,
-          phone: phone ? `${dial} ${phone}`.trim() : '',
-          notify,
-          company,
-          source: window.location.pathname,
-          referrer: document.referrer,
-        }),
-      });
-
-      const result = (await response.json().catch(() => null)) as
-        | { success?: boolean; count?: number | null; error?: string; alreadyJoined?: boolean }
-        | null;
-
-      if (!response.ok || !result?.success) {
-        setError(result?.error ?? 'Something went wrong. Please check your details and try again.');
-        setStatus('error');
-        playUiSound('error');
+      if (joined) {
+        setCardOpen(true);
         return;
       }
 
-      if (typeof result.count === 'number') setServerCount(result.count);
-      setJoined(true);
-      setStatus('success');
-      playUiSound('success');
-      // Celebrate again as the card lands.
-      window.setTimeout(() => playUiSound('success'), 450);
-    } catch {
-      setError('Could not reach the waitlist. Check your connection and try again.');
-      setStatus('error');
-      playUiSound('error');
-    }
+      setOpen(true);
+      window.setTimeout(() => {
+        root.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 220);
+    };
+
+    window.addEventListener('shelf:open-waitlist', onExternalOpen);
+    return () => window.removeEventListener('shelf:open-waitlist', onExternalOpen);
+  }, [joined, open, cardOpen, closing]);
+
+  function focusTrigger() {
+    window.setTimeout(() => {
+      triggerRef.current?.querySelector<HTMLElement>('a, button')?.focus({ preventScroll: true });
+    }, 120);
   }
 
-  const dial = COUNTRIES.find((c) => c.code === country)?.dial ?? '+91';
-
-  async function downloadCard() {
-    playUiSound('click');
-    try {
-      const response = await fetch('/svg/waitlistingcard.svg');
-      if (!response.ok) throw new Error('download failed');
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = 'shelf-waitlist-card.svg';
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
-      setNotice('Card downloaded.');
-      playUiSound('success');
-    } catch {
-      setNotice('Could not download the card.');
-      playUiSound('error');
+  function openExperience() {
+    playUiSound('waitlist');
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
     }
+    setClosing(false);
+    if (joined) {
+      setCardOpen(true);
+      return;
+    }
+    setOpen(true);
   }
 
-  async function shareCard() {
-    playUiSound('click');
-    const firstName = name ? ` ${name.split(' ')[0]}` : '';
-    const shareText = `I${firstName} just joined the Shelf waitlist — save everything, find anything.`;
-    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
-    try {
-      if (nav.share) {
-        await nav.share({
-          title: 'Shelf waitlist',
-          text: shareText,
-          url: window.location.origin,
-        });
-        setNotice('Thanks for sharing!');
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(`${shareText} ${window.location.origin}`);
-        setNotice('Invite link copied to clipboard.');
-        playUiSound('success');
-      } else {
-        setNotice('Sharing is not available on this device.');
-      }
-    } catch {
-      /* user dismissed the sheet — stay quiet */
-    }
+  function closeForm() {
+    if (!open || closing) return;
+    playUiSound('close');
+    setClosing(true);
+    setOpen(false);
+
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null;
+      setClosing(false);
+      focusTrigger();
+    }, variant === 'content' ? 300 : 620);
   }
+
+  function handleSuccess(result: WaitlistSuccess, details: { name: string; email: string }) {
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    const saved = saveWaitlistState(result, details.name, details.email);
+    setJoined(saved);
+    setClosing(false);
+    setOpen(false);
+    setCardOpen(true);
+    playUiSound('success');
+    window.setTimeout(() => playUiSound('success'), 420);
+    window.dispatchEvent(
+      new CustomEvent('shelf:waitlist-joined', {
+        detail: { position: result.position, referralCode: result.referralCode, alreadyJoined: result.alreadyJoined === true },
+      }),
+    );
+  }
+
+  function closeCard() {
+    playUiSound('close');
+    setCardOpen(false);
+    focusTrigger();
+  }
+
+  const rootClassName = [styles.experience, 'waitlist-signup', className].filter(Boolean).join(' ');
 
   return (
-    <div className={`waitlist-signup ${className}`.trim()}>
-      {status === 'success' ? (
-        <p className="waitlist-success" role="status">
-          You’re on the list. Check your inbox.
-        </p>
-      ) : (
-        <BookDemoButton
-          href="#waitlist"
-          size={20}
-          role="button"
-          aria-haspopup="dialog"
-          onClick={(event) => {
-            event.preventDefault();
-            openModal();
-          }}
-        >
-          Join waitlist
-        </BookDemoButton>
-      )}
-      <WaitlistProof joined={joined} count={serverCount ?? undefined} hideLabel={hideProofLabel} hideFaces={hideFaces} className="waitlist-proof" />
-
-      {mounted && modalOpen && createPortal(
-        <div className={modal.backdrop} onClick={closeModal}>
-          <div
-            className={modal.sheet}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`${id}-title`}
-            onClick={(event) => event.stopPropagation()}
+    <div
+      ref={rootRef}
+      className={rootClassName}
+      data-open={open || undefined}
+      data-closing={closing || undefined}
+      data-variant={variant}
+      data-joined={joined ? true : undefined}
+    >
+      <div ref={copyRef} className={styles.copy}>
+        {children}
+        <div ref={triggerRef} className={styles.ctaRow}>
+          <BookDemoButton
+            href="#waitlist"
+            size={20}
+            role="button"
+            aria-haspopup={joined ? 'dialog' : undefined}
+            aria-expanded={joined ? undefined : open}
+            aria-controls={!joined && open ? id : undefined}
+            onClick={(event) => {
+              event.preventDefault();
+              openExperience();
+            }}
           >
-            <button className={modal.close} type="button" onClick={closeModal} aria-label="Close">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
-                <path d="M5 5l14 14M19 5L5 19" />
-              </svg>
-            </button>
+            {joined ? 'View my spot' : 'Join waitlist'}
+          </BookDemoButton>
+          <WaitlistProof
+            joined={Boolean(joined)}
+            hideLabel={hideProofLabel}
+            hideFaces={hideFaces}
+            className={styles.proof}
+          />
+        </div>
+      </div>
 
-            {status === 'success' ? (
-              <div className={modal.success}>
-                <Image
-                  className={modal.card}
-                  src="/svg/waitlistingcard.svg"
-                  alt="Your Shelf waitlist card"
-                  width={310}
-                  height={401}
-                  unoptimized
-                  priority
-                />
-                <h2 className={modal.successTitle}>
-                  {name ? `You’re in, ${name.split(' ')[0]}!` : 'You’re in!'}
-                </h2>
-                <p className={modal.successText}>We saved your spot. Watch your inbox for early access.</p>
-                <div className={modal.cardActions}>
-                  <button className={modal.cardButton} type="button" onClick={() => void downloadCard()}>
-                    Download card
-                  </button>
-                  <button className={modal.cardButton} type="button" onClick={() => void shareCard()}>
-                    Share
-                  </button>
-                </div>
-                {notice && <p className={modal.notice} role="status">{notice}</p>}
-                <button className={modal.successClose} type="button" onClick={closeModal}>
-                  Done
-                </button>
-              </div>
-            ) : (
-              <>
-                <Suspense fallback={null}>
-                  <ModalPeels peels={PEELS} />
-                </Suspense>
+      {(open || closing) && (
+        <div className={styles.panel} data-variant={variant}>
+          {variant === 'hero' && (
+            <div className={styles.mobileStickers} aria-hidden="true">
+              <img className={styles.stickerFlower} src="/svg/flower.svg" alt="" draggable={false} />
+              <img className={styles.stickerSmile} src="/svg/smile%20sticker.svg" alt="" draggable={false} />
+              <img className={styles.stickerCassette} src="/svg/cassete.svg" alt="" draggable={false} />
+              <img className={styles.stickerCalculator} src="/svg/calculator.svg" alt="" draggable={false} />
+              <img className={styles.stickerPolaroid} src="/svg/polaroid.svg" alt="" draggable={false} />
+              <img className={styles.stickerBlueFlower} src="/svg/blue%20flower.svg" alt="" draggable={false} />
+            </div>
+          )}
+          <WaitlistForm id={id} onSuccess={handleSuccess} onCancel={closeForm} />
+        </div>
+      )}
 
-                <form className={modal.form} onSubmit={(event) => void submit(event)}>
-                  <h2 id={`${id}-title`} className={modal.title}>
-                    Join us to organize your life with <em>your AI</em>
-                  </h2>
-
-                  <div className={modal.fields}>
-                    <input
-                      className={modal.honeypot}
-                      type="text"
-                      name="company"
-                      value={company}
-                      onChange={(event) => setCompany(event.target.value)}
-                      tabIndex={-1}
-                      autoComplete="off"
-                      aria-hidden="true"
-                    />
-
-                    <label className={modal.label}>
-                      Name<span className={modal.required} aria-hidden="true">*</span>
-                      <input
-                        ref={nameRef}
-                        className={modal.input}
-                        type="text"
-                        value={name}
-                        onChange={(event) => setName(event.target.value)}
-                        placeholder="Fill your full name"
-                        required
-                        autoComplete="name"
-                      />
-                    </label>
-
-                    <label className={modal.label}>
-                      Email<span className={modal.required} aria-hidden="true">*</span>
-                      <input
-                        className={modal.input}
-                        type="email"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        placeholder="Fill your email address"
-                        required
-                        autoComplete="email"
-                      />
-                    </label>
-
-                    <div className={modal.row}>
-                      <label className={modal.label}>
-                        Country
-                        <select
-                          className={modal.select}
-                          value={country}
-                          onChange={(event) => setCountry(event.target.value)}
-                        >
-                          {COUNTRIES.map((c) => (
-                            <option key={c.code} value={c.code}>
-                              {c.code}&nbsp;&nbsp;{c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className={modal.label}>
-                        Phone number
-                        <span className={modal.phoneWrap}>
-                          <span className={modal.dial}>{dial}</span>
-                          <input
-                            className={modal.input}
-                            type="tel"
-                            value={phone}
-                            onChange={(event) => setPhone(event.target.value)}
-                            placeholder="Phone number"
-                            autoComplete="tel"
-                          />
-                        </span>
-                      </label>
-                    </div>
-
-                    <div className={modal.checks}>
-                      <label className={modal.check}>
-                        <input
-                          type="checkbox"
-                          checked={notify}
-                          onChange={(event) => setNotify(event.target.checked)}
-                        />
-                        Agree to email notifications about blogs and updates
-                      </label>
-                      <label className={modal.check}>
-                        <input type="checkbox" required />
-                        T&C read
-                      </label>
-                    </div>
-
-                    {status === 'error' && (
-                      <p className={modal.error} role="alert">
-                        {error ?? 'Something went wrong. Please check your details and try again.'}
-                      </p>
-                    )}
-
-                    <button className={modal.submit} type="submit" disabled={status === 'loading'}>
-                      {status === 'loading' ? 'Joining…' : 'Join waitlist!!!!'}
-                    </button>
-
-                    <WaitlistProof fetchCount={false} joined={joined} tone="dark" size={34} className={modal.proof} />
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-        </div>,
-        document.body
+      {mounted && joined && createPortal(
+        <ShareCardModal
+          open={cardOpen}
+          position={joined.position}
+          shareUrl={joined.referralUrl}
+          shareText={`I just joined the shelf waitlist. I’m #${joined.position}.`}
+          onClose={closeCard}
+          onShared={(method) => {
+            playUiSound('success');
+            window.dispatchEvent(
+              new CustomEvent('shelf:waitlist-shared', {
+                detail: { method, position: joined.position, referralCode: joined.referralCode },
+              }),
+            );
+          }}
+        />,
+        document.body,
       )}
     </div>
   );

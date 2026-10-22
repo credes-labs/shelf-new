@@ -9,7 +9,8 @@ Next.js 16 app; the marketing site (Next 13.5) consumes it over REST.
 
 Both apps share one Supabase Postgres database. Payload writes to the
 `payload` schema, so its tables are not exposed by Supabase's `public` REST API.
-The waitlist stays in `public`.
+The waitlist stays in `public`. See [`../HANDOFF.md`](../HANDOFF.md) for the
+production setup, credential ownership, and deployment checklist.
 
 ## Requirements
 
