@@ -205,6 +205,11 @@ The short version:
   Directory = `cms`**, add the CMS env vars, apply Payload migrations to the
   production database once, then deploy.
 
+The git-ignored `.env.production` (site) and `cms/.env.production` (CMS) files
+already contain the current Supabase/S3 values. Replace the two example domains
+in each file once the Vercel domains are assigned, then copy the values into the
+Vercel projects.
+
 Do not enable `PAYLOAD_DB_PUSH` on a shared or production database. Full steps,
 environment tables, and sign-off checks are in [`HANDOFF.md`](./HANDOFF.md).
 

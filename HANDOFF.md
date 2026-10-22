@@ -7,11 +7,25 @@ checks to run before calling it done.
 > **Current status:** the site and CMS are implemented and pass local QA. The
 > new Supabase project is `https://gcspqnjoyaokhirkgrfh.supabase.co`
 > (`ap-southeast-1`). Its URL and publishable key are wired into the site env,
-> all three waitlist migrations have been applied, and the Payload schema
-> migration has been applied. The CMS is running locally at
-> `http://localhost:3001/admin`; production still needs Vercel projects,
-> storage credentials, and the final domain/env values. Do not try to reuse the
-> old `twofxxgidvugywfmgvwa` project.
+> all three waitlist migrations have been applied, and the Payload schema plus
+> the S3 media migration have been applied. The CMS is running locally at
+> `http://localhost:3001/admin`; starter posts and covers are seeded, and media
+> is served from the public `shelf-media` bucket. Production still needs the two
+> Vercel projects and final domains; copy-paste env files are ready locally.
+> Do not try to reuse the old `twofxxgidvugywfmgvwa` project.
+
+### Ready-to-paste production env files
+
+These are local, git-ignored files with the live project values:
+
+| File | Use |
+|---|---|
+| `.env.production` | Site/Vercel production env |
+| `cms/.env.production` | CMS/Vercel production env (Root Directory = `cms`) |
+
+Replace `https://shelf.example.com` and `https://cms.shelf.example.com` in both
+files once the Vercel domains are assigned. Do not commit either file. For local
+`next start`, `cms/.env.local` overrides the local URLs/secrets.
 
 ---
 
