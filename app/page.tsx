@@ -417,7 +417,7 @@ export default function Home() {
             </div>
             <div className="mobile-story-copy">
               {index === 0 && (
-                <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist" hideProofLabel hideFaces>
+                <WaitlistSignup id="home-waitlist-mobile-0" className="waitlist-inline mobile-waitlist mobile-waitlist-first" hideProofLabel hideFaces>
                   <h1>Keep your<br />context.<br />Find it<br />when it<br /><HeadlineStyleToken /></h1>
                 </WaitlistSignup>
               )}

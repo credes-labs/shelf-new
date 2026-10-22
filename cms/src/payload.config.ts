@@ -25,6 +25,8 @@ const s3Enabled = Boolean(
     process.env.S3_SECRET_ACCESS_KEY,
 )
 
+const publicMediaBase = (process.env.SUPABASE_PUBLIC_MEDIA_URL || '').replace(/\/+$/, '')
+
 const allowedOrigins = Array.from(new Set([siteURL, serverURL, 'http://localhost:3000', 'http://localhost:3001']))
 
 export default buildConfig({
@@ -74,7 +76,14 @@ export default buildConfig({
     ...(s3Enabled
       ? [
           s3Storage({
-            collections: { media: true },
+            collections: {
+              media: publicMediaBase
+                ? {
+                    generateFileURL: ({ filename }) =>
+                      `${publicMediaBase}/${encodeURIComponent(filename)}`,
+                  }
+                : true,
+            },
             bucket: process.env.S3_BUCKET as string,
             config: {
               endpoint: process.env.S3_ENDPOINT,

@@ -316,6 +316,11 @@
   align-items: center;
   margin-top: clamp(16px, 2.6svh, 30px);
 }
+/* On the first phone panel, let the button sit in the open space between
+   the headline and the next phone instead of hugging the last line. */
+:global(.mobile-waitlist-first) .ctaRow {
+  translate: 0 clamp(32px, 6.2svh, 58px);
+}
 :global(.mobile-waitlist) .proof {
   align-items: center;
   margin-inline: auto;

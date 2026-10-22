@@ -259,6 +259,10 @@ button, input { font: inherit; }
     background: var(--blue);
   }
   .mobile-story-copy { position: relative; z-index: 4; grid-row: 2; width: 100%; max-width: 460px; margin: 0 auto; text-align: center; }
+  /* The first panel's waitlist button sits in the visual gap before the next
+     phone. Let that one panel paint into the next panel's top padding instead
+     of clipping the button at the 135svh boundary. */
+  .mobile-story-step:first-of-type { overflow: visible; z-index: 3; }
   /* Small continuity stickers bridging one panel into the next. */
   .mobile-story-edge { position: absolute; z-index: 1; width: 50px; height: auto; pointer-events: none; filter: drop-shadow(0 4px 8px rgba(10, 13, 70, .25)); }
   .mobile-story-copy h1 { margin: 0; font-size: var(--story-h1); letter-spacing: -1.9px; line-height: .95; font-weight: 800; }
@@ -492,7 +496,7 @@ input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] { 
 .waitlist-proof { margin-top: 7px; }
 @media (max-width: 900px) {
   .hero-copy > .dt-row { display: none; }
-  .mobile-story-copy .dt-row-mobile { display: flex; justify-content: center; gap: 18px; width: 100%; margin: clamp(8px, 1.2svh, 16px) auto 0; }
+  .mobile-story-copy .dt-row-mobile { display: flex; justify-content: center; gap: 18px; width: 100%; margin: clamp(8px, 1.2svh, 16px) auto 0; translate: 0 clamp(54px, 11.4svh, 108px); }
   .mobile-story-copy .dt-chip { padding: 6px 8px; font-size: 11px; }
   .mobile-story-copy .dt-chip:nth-child(2) { --x: -29px; }
   .mobile-story-copy .dt-chip:nth-child(3) { --x: 18px; }

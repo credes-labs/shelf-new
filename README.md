@@ -122,9 +122,10 @@ npm run build
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata, social images, and referral links |
 | `SUPABASE_URL` | Server-side waitlist route |
-| `SUPABASE_ANON_KEY` | Server-side waitlist RPC; least-privilege key |
+| `SUPABASE_ANON_KEY` | Server-side waitlist RPC; least-privilege anon/publishable key |
+| `SUPABASE_PUBLISHABLE_KEY` | Alternative name for the same Supabase publishable key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Optional server-only fallback; not needed for the waitlist |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional public copies; only if a browser-side client is added |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Optional public copies; only if a browser-side client is added |
 | `PAYLOAD_URL` | Blog data. Empty = bundled fallback articles |
 | `PAYLOAD_REVALIDATE_SECONDS` | ISR window for blog fetches (default `60`) |
 | `REVALIDATE_SECRET` | Shared secret for `POST /api/revalidate` |
