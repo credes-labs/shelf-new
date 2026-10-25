@@ -1,4 +1,6 @@
-.root { position: relative; display: inline-block; white-space: nowrap; vertical-align: baseline; }
+/* Keep the editable word and its toolbar in their own raised layer so the
+   waitlist CTA below can never paint over the editor. */
+.root { position: relative; z-index: 30; display: inline-block; white-space: nowrap; vertical-align: baseline; }
 .word { position: relative; z-index: 1; display: inline-block; cursor: pointer; outline: none; }
 .word:focus-visible { text-shadow: 0 0 0.02em currentColor; }
 .selection { position: absolute; z-index: 2; inset: -7px -6px; border: 1.5px solid #2196f3; border-radius: 2px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 120ms ease, visibility 120ms ease; }
